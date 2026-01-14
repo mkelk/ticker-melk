@@ -824,6 +824,65 @@ func TestRenderStatusBar(t *testing.T) {
 	}
 }
 
+func TestRenderStatusBar_WithProject(t *testing.T) {
+	m := New(Config{
+		EpicID:      "xyz",
+		EpicTitle:   "My Epic",
+		EpicProject: "PROJ",
+	})
+	m.width = 120
+	m.height = 30
+	m.running = true
+
+	output := m.renderStatusBar()
+
+	if !strings.Contains(output, "PROJ") {
+		t.Error("expected status bar to contain project code 'PROJ'")
+	}
+}
+
+func TestRenderStatusBar_WithProjectFilter(t *testing.T) {
+	m := New(Config{
+		EpicID:        "xyz",
+		EpicTitle:     "My Epic",
+		EpicProject:   "PROJ",
+		ProjectFilter: "PROJ",
+	})
+	m.width = 120
+	m.height = 30
+	m.running = true
+
+	output := m.renderStatusBar()
+
+	if !strings.Contains(output, "PROJ") {
+		t.Error("expected status bar to contain project code 'PROJ'")
+	}
+	if !strings.Contains(output, "filtered") {
+		t.Error("expected status bar to contain 'filtered' indicator")
+	}
+}
+
+func TestRenderStatusBar_FilteredWithoutEpicProject(t *testing.T) {
+	// When epic has no project but filter is active, should show filter as display
+	m := New(Config{
+		EpicID:        "xyz",
+		EpicTitle:     "My Epic",
+		ProjectFilter: "FILTER",
+	})
+	m.width = 120
+	m.height = 30
+	m.running = true
+
+	output := m.renderStatusBar()
+
+	if !strings.Contains(output, "FILTER") {
+		t.Error("expected status bar to contain filter project code 'FILTER'")
+	}
+	if !strings.Contains(output, "filtered") {
+		t.Error("expected status bar to contain 'filtered' indicator")
+	}
+}
+
 func TestRenderStatusBar_Paused(t *testing.T) {
 	m := New(Config{})
 	m.width = 100
@@ -965,6 +1024,27 @@ func TestRenderTaskPane_Empty(t *testing.T) {
 
 	if !strings.Contains(output, "No tasks") {
 		t.Error("expected task pane to contain 'No tasks' when empty")
+	}
+}
+
+func TestRenderTaskPane_WithProject(t *testing.T) {
+	m := New(Config{
+		EpicProject: "MYPROJ",
+	})
+	m.width = 100
+	m.height = 30
+	m.focusedPane = PaneTasks
+	m.tasks = []TaskInfo{
+		{ID: "abc", Title: "First Task", Status: TaskStatusOpen},
+	}
+
+	output := m.renderTaskPane(20)
+
+	if !strings.Contains(output, "Project:") {
+		t.Error("expected task pane to contain 'Project:' label")
+	}
+	if !strings.Contains(output, "MYPROJ") {
+		t.Error("expected task pane to contain project code 'MYPROJ'")
 	}
 }
 

@@ -216,6 +216,7 @@ func runRun(cmd *cobra.Command, args []string) {
 
 	var epicIDs []string
 	var epicTitles []string
+	var epicProjects []string
 
 	if len(args) > 0 {
 		epicIDs = args
@@ -253,6 +254,7 @@ func runRun(cmd *cobra.Command, args []string) {
 		}
 		epicIDs = []string{selected.ID}
 		epicTitles = []string{selected.Title}
+		epicProjects = []string{selected.Project}
 	} else {
 		fmt.Fprintln(os.Stderr, "Error: either provide an epic-id or use --auto")
 		os.Exit(ExitError)
@@ -265,9 +267,10 @@ func runRun(cmd *cobra.Command, args []string) {
 		os.Exit(ExitError)
 	}
 
-	// Get epic titles and validate project (if not already from picker)
+	// Get epic titles/projects and validate project (if not already from picker)
 	if len(epicTitles) == 0 {
 		epicTitles = make([]string, len(epicIDs))
+		epicProjects = make([]string, len(epicIDs))
 		for i, id := range epicIDs {
 			epic, err := ticksClient.GetEpic(id)
 			if err != nil {
@@ -275,6 +278,7 @@ func runRun(cmd *cobra.Command, args []string) {
 				os.Exit(ExitError)
 			}
 			epicTitles[i] = epic.Title
+			epicProjects[i] = epic.Project
 
 			// Warn if epic's project doesn't match the --project filter
 			if project != "" && epic.Project != project {
@@ -305,7 +309,7 @@ func runRun(cmd *cobra.Command, args []string) {
 			maxParallel = len(epicIDs)
 		}
 		if !headless {
-			runParallelWithTUI(epicIDs, epicTitles, maxIterations, maxCost, checkpointInterval, maxTaskRetries, skipVerify, maxParallel)
+			runParallelWithTUI(epicIDs, epicTitles, epicProjects, project, maxIterations, maxCost, checkpointInterval, maxTaskRetries, skipVerify, maxParallel)
 		} else {
 			runParallelHeadless(epicIDs, maxIterations, maxCost, checkpointInterval, maxTaskRetries, skipVerify, maxParallel, jsonl)
 		}
@@ -315,10 +319,14 @@ func runRun(cmd *cobra.Command, args []string) {
 	// Single epic - use existing Engine
 	epicID := epicIDs[0]
 	epicTitle := epicTitles[0]
+	epicProject := ""
+	if len(epicProjects) > 0 {
+		epicProject = epicProjects[0]
+	}
 
 	// TUI mode (default)
 	if !headless {
-		runWithTUI(epicID, epicTitle, maxIterations, maxCost, checkpointInterval, maxTaskRetries, skipVerify, useWorktree)
+		runWithTUI(epicID, epicTitle, epicProject, project, maxIterations, maxCost, checkpointInterval, maxTaskRetries, skipVerify, useWorktree)
 		return
 	}
 
@@ -348,7 +356,7 @@ func validateEpicIDs(client *ticks.Client, epicIDs []string) error {
 	return nil
 }
 
-func runParallelWithTUI(epicIDs, epicTitles []string, maxIterations int, maxCost float64, checkpointInterval, maxTaskRetries int, skipVerify bool, maxParallel int) {
+func runParallelWithTUI(epicIDs, epicTitles, epicProjects []string, projectFilter string, maxIterations int, maxCost float64, checkpointInterval, maxTaskRetries int, skipVerify bool, maxParallel int) {
 	// Create context with signal handling
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -405,12 +413,19 @@ func runParallelWithTUI(epicIDs, epicTitles []string, maxIterations int, maxCost
 
 	// Create TUI model with first epic as initial
 	pauseChan := make(chan bool, 1)
+	// Get first epic's project (may be empty)
+	firstEpicProject := ""
+	if len(epicProjects) > 0 {
+		firstEpicProject = epicProjects[0]
+	}
 	m := tui.New(tui.Config{
-		EpicID:       epicIDs[0],
-		EpicTitle:    epicTitles[0],
-		MaxCost:      maxCost,
-		MaxIteration: maxIterations,
-		PauseChan:    pauseChan,
+		EpicID:        epicIDs[0],
+		EpicTitle:     epicTitles[0],
+		EpicProject:   firstEpicProject,
+		ProjectFilter: projectFilter,
+		MaxCost:       maxCost,
+		MaxIteration:  maxIterations,
+		PauseChan:     pauseChan,
 	})
 
 	// Create program
@@ -948,17 +963,19 @@ func runParallelHeadless(epicIDs []string, maxIterations int, maxCost float64, c
 	os.Exit(ExitError)
 }
 
-func runWithTUI(epicID, epicTitle string, maxIterations int, maxCost float64, checkpointInterval, maxTaskRetries int, skipVerify, useWorktree bool) {
+func runWithTUI(epicID, epicTitle, epicProject, projectFilter string, maxIterations int, maxCost float64, checkpointInterval, maxTaskRetries int, skipVerify, useWorktree bool) {
 	// Create pause channel for TUI <-> engine communication
 	pauseChan := make(chan bool, 1)
 
 	// Create TUI model
 	m := tui.New(tui.Config{
-		EpicID:       epicID,
-		EpicTitle:    epicTitle,
-		MaxCost:      maxCost,
-		MaxIteration: maxIterations,
-		PauseChan:    pauseChan,
+		EpicID:        epicID,
+		EpicTitle:     epicTitle,
+		EpicProject:   epicProject,
+		ProjectFilter: projectFilter,
+		MaxCost:       maxCost,
+		MaxIteration:  maxIterations,
+		PauseChan:     pauseChan,
 	})
 
 	// Create program
@@ -1514,6 +1531,7 @@ func runPicker(project string) *tui.EpicInfo {
 		epicInfos[i] = tui.EpicInfo{
 			ID:       e.ID,
 			Title:    e.Title,
+			Project:  e.Project,
 			Priority: e.Priority,
 			Tasks:    len(tasks),
 		}

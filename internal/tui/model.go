@@ -580,9 +580,11 @@ var defaultKeyMap = keyMap{
 // Model is the main Bubble Tea model for the ticker TUI.
 type Model struct {
 	// Epic/Run state
-	epicID       string
-	epicTitle    string
-	globalStatus string // Global status message (e.g., "Creating worktrees...")
+	epicID        string
+	epicTitle     string
+	epicProject   string // Project code of the current epic
+	projectFilter string // Active project filter (from --project flag)
+	globalStatus  string // Global status message (e.g., "Creating worktrees...")
 	iteration    int
 	taskID       string
 	taskTitle    string
@@ -1017,11 +1019,13 @@ func newMarkdownRenderer(width int) *glamour.TermRenderer {
 // Config holds configuration for initializing the TUI.
 // Passed to New() to create a configured Model.
 type Config struct {
-	EpicID       string
-	EpicTitle    string
-	MaxCost      float64
-	MaxIteration int
-	PauseChan    chan<- bool
+	EpicID        string
+	EpicTitle     string
+	EpicProject   string // Project code of the epic
+	ProjectFilter string // Active project filter (from --project flag)
+	MaxCost       float64
+	MaxIteration  int
+	PauseChan     chan<- bool
 }
 
 // New creates a new TUI model with the given configuration.
@@ -1036,10 +1040,12 @@ func New(cfg Config) Model {
 
 	return Model{
 		// Epic/Run state from config
-		epicID:    cfg.EpicID,
-		epicTitle: cfg.EpicTitle,
-		running:   true,
-		startTime: time.Now(),
+		epicID:        cfg.EpicID,
+		epicTitle:     cfg.EpicTitle,
+		epicProject:   cfg.EpicProject,
+		projectFilter: cfg.ProjectFilter,
+		running:       true,
+		startTime:     time.Now(),
 
 		// Budget tracking from config
 		maxCost:       cfg.MaxCost,
@@ -2467,6 +2473,22 @@ func (m Model) renderStatusBar() string {
 		leftContent += ": " + m.epicTitle
 	}
 
+	// Add project info (from epic's project or active filter)
+	projectDisplay := m.epicProject
+	if projectDisplay == "" && m.projectFilter != "" {
+		projectDisplay = m.projectFilter
+	}
+	if projectDisplay != "" {
+		projectStyle := lipgloss.NewStyle().Foreground(colorPurple).Bold(true)
+		leftContent += " " + projectStyle.Render("["+projectDisplay+"]")
+	}
+
+	// Add filter indicator when project filter is active
+	if m.projectFilter != "" {
+		filterStyle := lipgloss.NewStyle().Foreground(colorPeach).Italic(true)
+		leftContent += " " + filterStyle.Render("(filtered)")
+	}
+
 	// Global status message (e.g., "Creating worktrees...")
 	var globalStatusText string
 	if m.globalStatus != "" {
@@ -2633,9 +2655,19 @@ func (m Model) renderTaskPane(height int) string {
 		header = hdrStyle.Render(fmt.Sprintf("Tasks (%d/%d)", completed, len(m.tasks)))
 	}
 
+	// Add project info below header if available
+	var projectLine string
+	if m.epicProject != "" {
+		projectStyle := lipgloss.NewStyle().Foreground(colorPurple).Italic(true)
+		projectLine = projectStyle.Render("Project: " + m.epicProject)
+	}
+
 	// Build task list content
 	var lines []string
 	lines = append(lines, header)
+	if projectLine != "" {
+		lines = append(lines, projectLine)
+	}
 	lines = append(lines, "") // Separator line after header
 
 	if len(m.tasks) == 0 {
@@ -3613,6 +3645,7 @@ func (m Model) renderConflictOverlay() string {
 type EpicInfo struct {
 	ID       string
 	Title    string
+	Project  string // Project code (may be empty)
 	Priority int
 	Tasks    int
 }

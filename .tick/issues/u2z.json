@@ -2,7 +2,7 @@
   "id": "u2z",
   "title": "Add project display to TUI",
   "description": "Enhance TUI to show project information:\n\n- Show current project in header/status bar when --project flag used\n- Show project of selected epic in task pane\n- Add filter indicator when project filter is active\n- Optionally show project column in task list",
-  "status": "open",
+  "status": "closed",
   "priority": 2,
   "type": "task",
   "owner": "morten@elk.dk",
@@ -13,5 +13,7 @@
   "acceptance_criteria": "TUI displays project info correctly",
   "created_by": "morten@elk.dk",
   "created_at": "2026-01-14T18:51:38.9616256Z",
-  "updated_at": "2026-01-14T18:51:38.9616256Z"
+  "updated_at": "2026-01-14T19:59:49.1715425Z",
+  "closed_at": "2026-01-14T19:59:49.1715425Z",
+  "closed_reason": "Added project display to TUI: (1) Config and Model fields for EpicProject and ProjectFilter, (2) Status bar shows project code in purple [PROJECT] format with (filtered) indicator when --project flag is active, (3) Task pane shows 'Project: CODE' line below header when epic has a project, (4) EpicInfo struct includes Project field for picker display. Tests added for all new rendering features."
 }
