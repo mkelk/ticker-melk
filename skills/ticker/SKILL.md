@@ -212,6 +212,21 @@ tk create "Add login endpoint" -project "$DETECTED_PROJECT"
 
 The project code links all related ticks together for filtering and budget tracking.
 
+**If no project was detected in Step 0.5:**
+
+Before creating ticks, prompt the user with `AskUserQuestion`:
+
+```
+No project code detected. Would you like to:
+1. Generate a new project code (recommended)
+2. Continue without a project code
+3. Enter a project code manually
+```
+
+- **Option 1 (Generate new):** Create a project code using format `YYYY-MM-DD-XXXX-project-name` where XXXX is a random 4-char hex and project-name is derived from the spec/repo name. Apply to all ticks.
+- **Option 2 (Continue without):** Create ticks without the `-project` flag. Not recommended for larger projects.
+- **Option 3 (Enter manually):** Use the user-provided project code for all ticks.
+
 **CRITICAL: First Task Must Be Environment Validation**
 
 The very first task in ANY epic must be running existing tests and validating the environment. This ensures we start from a healthy state before making any code changes.
