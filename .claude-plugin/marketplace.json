@@ -9,7 +9,7 @@
       "name": "ticker",
       "source": "./",
       "description": "Create specs, generate ticks, run autonomous coding agents on epics",
-      "version": "0.3.3"
+      "version": "0.3.4"
     }
   ]
 }
