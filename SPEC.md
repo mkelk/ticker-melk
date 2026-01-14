@@ -1031,6 +1031,44 @@ type Checkpoint struct {
 
 ## Budget Management
 
+### Project-Level Budgeting
+
+Ticker supports organizing epics by project for budget tracking and filtering. Projects are identified by a code (e.g., `2026-01-14-6453-auth`) following the SDD naming format: `YYYY-MM-DD-NNNN-name`.
+
+**Key features:**
+
+- **Filtering**: Use `--project <code>` to filter the epic picker or `--auto` selection to a specific project
+- **Budget tracking**: Per-project cost and token totals stored in `.ticker/projects.json`
+- **Auto-detection**: The ticker skill can auto-detect projects from branch names or spec directories
+- **TUI display**: Active project shown in TUI header when running with `--project`
+
+**CLI usage:**
+
+```bash
+# Filter TUI picker to project epics
+ticker run --project 2026-01-14-6453
+
+# Auto-select from project epics only
+ticker run --auto --project 2026-01-14-6453
+
+# Headless output includes project summary
+ticker run <epic-id> --headless --project 2026-01-14-6453
+```
+
+**Project budget file** (`.ticker/projects.json`):
+
+```json
+{
+  "2026-01-14-6453-auth": {
+    "code": "2026-01-14-6453-auth",
+    "total_cost": 12.34,
+    "total_tokens": 156000,
+    "epics_completed": 3,
+    "last_updated": "2026-01-14T10:30:00Z"
+  }
+}
+```
+
 ### Limits
 
 ```go

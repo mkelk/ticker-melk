@@ -63,6 +63,9 @@ ticker run <epic-id>
 # Auto-select next ready epic
 ticker run --auto
 
+# Filter epics by project
+ticker run --project 2026-01-14-6453
+
 # Run in headless mode (no TUI)
 ticker run <epic-id> --headless
 
@@ -91,6 +94,20 @@ ticker run <epic-id> --checkpoint-interval 10
 # Disable checkpointing
 ticker run <epic-id> --checkpoint-interval 0
 ```
+
+### Project Filtering
+
+Projects group related epics under a common identifier (e.g., `2026-01-14-6453-auth`). When running ticker with `--project`, only epics tagged with that project are shown in the TUI picker or considered by `--auto` mode.
+
+```bash
+# Show only epics for a specific project
+ticker run --project 2026-01-14-6453
+
+# Auto-select from project epics only
+ticker run --auto --project 2026-01-14-6453
+```
+
+Project budgets are tracked separately in `.ticker/projects.json`, allowing cost analysis per project.
 
 ### TUI Controls
 
