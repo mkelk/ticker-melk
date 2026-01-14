@@ -2,11 +2,12 @@
   "id": "tr6",
   "title": "Ticker Skill - Project Auto-detection",
   "description": "Update ticker skill to auto-detect project codes from environment and apply to created ticks. Depends on ticks CLI and ticker Go having project support.",
+  "notes": "2026-01-14 21:10 - tye complete: Added project auto-detection to ticker skill (SKILL.md). Detection order: git branch -\u003e directory name -\u003e spec directory. Pattern regex: (\\d{4}-\\d{2}-\\d{2}-[0-9a-f]{4}-[\\w-]+). Updated Step 3 to apply project to created ticks. Also updated tk-commands.md reference with -project flag documentation.\n2026-01-14 21:12 - ih3 complete: Added explicit user prompt flow in Step 3 (SKILL.md lines 215-228) for when no project detected. Offers 3 options: generate new, continue without, or enter manually. Combined with tye's detection logic in Step 0.5. Test failures in main_test.go are pre-existing, unrelated to skill changes.",
   "status": "open",
   "priority": 2,
   "type": "epic",
   "owner": "morten@elk.dk",
   "created_by": "morten@elk.dk",
   "created_at": "2026-01-14T18:51:48.5971298Z",
-  "updated_at": "2026-01-14T18:51:48.5971298Z"
+  "updated_at": "2026-01-14T20:12:49.7503478Z"
 }
