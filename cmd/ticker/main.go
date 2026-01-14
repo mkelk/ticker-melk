@@ -693,6 +693,12 @@ func runParallelHeadless(epicIDs []string, maxIterations int, maxCost float64, c
 		MaxCost:       maxCost,
 	})
 
+	// Initialize project budget store
+	projectStore := budget.NewProjectStore()
+	if err := projectStore.Load(); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: could not load project budgets: %v\n", err)
+	}
+
 	// Check claude availability
 	claudeAgent := agent.NewClaudeAgent()
 	if !claudeAgent.Available() {
@@ -804,6 +810,10 @@ func runParallelHeadless(epicIDs []string, maxIterations int, maxCost float64, c
 				}
 			} else {
 				fmt.Printf("[%s] [COMPLETE] Epic finished\n", epicID)
+			}
+			// Track project budget
+			if result != nil && result.Project != "" {
+				projectStore.Add(result.Project, result.Iterations, result.TotalTokens, result.TotalCost)
 			}
 		},
 		OnEpicFailed: func(epicID string, err error) {
@@ -917,6 +927,19 @@ func runParallelHeadless(epicIDs []string, maxIterations int, maxCost float64, c
 		}
 		fmt.Println()
 		fmt.Println("════════════════════════════════════════════════════════════════")
+	}
+
+	// Save and output project budget summaries
+	if err := projectStore.Save(); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: could not save project budgets: %v\n", err)
+	}
+	projectBudgets := projectStore.All()
+	if len(projectBudgets) > 0 {
+		// Create a temporary output formatter for project summaries
+		out := engine.NewHeadlessOutput(jsonl, "")
+		for _, pb := range projectBudgets {
+			out.ProjectSummary(pb)
+		}
 	}
 
 	if allSuccess {
@@ -1198,6 +1221,13 @@ func runHeadless(epicID string, maxIterations int, maxCost float64, checkpointIn
 	})
 	checkpointMgr := checkpoint.NewManager()
 
+	// Initialize project budget store
+	projectStore := budget.NewProjectStore()
+	if err := projectStore.Load(); err != nil {
+		// Log but continue - project tracking is optional
+		fmt.Fprintf(os.Stderr, "Warning: could not load project budgets: %v\n", err)
+	}
+
 	// Get epic info for start message
 	epic, err := ticksClient.GetEpic(epicID)
 	if err != nil {
@@ -1274,6 +1304,16 @@ func runHeadless(epicID string, maxIterations int, maxCost float64, checkpointIn
 
 	// Output final summary
 	out.Complete(result)
+
+	// Update and output project budget summary
+	if result.Project != "" {
+		projectStore.Add(result.Project, result.Iterations, result.TotalTokens, result.TotalCost)
+		if err := projectStore.Save(); err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: could not save project budgets: %v\n", err)
+		}
+		// Output cumulative project summary
+		out.ProjectSummary(projectStore.Get(result.Project))
+	}
 
 	// Exit with appropriate code
 	switch result.Signal {

@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/pengelbrecht/ticker/internal/budget"
 	"github.com/pengelbrecht/ticker/internal/ticks"
 	"github.com/pengelbrecht/ticker/internal/verify"
 )
@@ -380,6 +381,168 @@ func TestHeadlessOutput_Interrupted(t *testing.T) {
 		}
 		if data["type"] != "interrupted" {
 			t.Errorf("expected type=interrupted, got %v", data["type"])
+		}
+	})
+}
+
+func TestHeadlessOutput_ProjectSummary(t *testing.T) {
+	pb := &budget.ProjectBudget{
+		Project:    "2026-01-14-6453-auth",
+		Iterations: 47,
+		Tokens:     1200000,
+		Cost:       12.34,
+	}
+
+	t.Run("human readable format", func(t *testing.T) {
+		var buf bytes.Buffer
+		out := NewHeadlessOutput(false, "")
+		out.SetWriter(&buf)
+
+		out.ProjectSummary(pb)
+
+		output := buf.String()
+		if !strings.Contains(output, "[PROJECT]") {
+			t.Error("expected [PROJECT] prefix")
+		}
+		if !strings.Contains(output, "2026-01-14-6453-auth") {
+			t.Error("expected project name")
+		}
+		if !strings.Contains(output, "47") {
+			t.Error("expected iterations")
+		}
+		if !strings.Contains(output, "1.2M") {
+			t.Error("expected formatted tokens")
+		}
+		if !strings.Contains(output, "$12.34") {
+			t.Error("expected cost")
+		}
+	})
+
+	t.Run("jsonl format", func(t *testing.T) {
+		var buf bytes.Buffer
+		out := NewHeadlessOutput(true, "")
+		out.SetWriter(&buf)
+
+		out.ProjectSummary(pb)
+
+		var data map[string]interface{}
+		if err := json.Unmarshal(buf.Bytes(), &data); err != nil {
+			t.Fatalf("invalid JSON: %v", err)
+		}
+		if data["type"] != "project_summary" {
+			t.Errorf("expected type=project_summary, got %v", data["type"])
+		}
+		if data["project"] != "2026-01-14-6453-auth" {
+			t.Errorf("expected project=2026-01-14-6453-auth, got %v", data["project"])
+		}
+		if data["iterations"].(float64) != 47 {
+			t.Errorf("expected iterations=47, got %v", data["iterations"])
+		}
+		if data["tokens"].(float64) != 1200000 {
+			t.Errorf("expected tokens=1200000, got %v", data["tokens"])
+		}
+		if data["cost"].(float64) != 12.34 {
+			t.Errorf("expected cost=12.34, got %v", data["cost"])
+		}
+	})
+
+	t.Run("nil budget does not output", func(t *testing.T) {
+		var buf bytes.Buffer
+		out := NewHeadlessOutput(false, "")
+		out.SetWriter(&buf)
+
+		out.ProjectSummary(nil)
+
+		if buf.Len() > 0 {
+			t.Error("expected no output for nil budget")
+		}
+	})
+
+	t.Run("empty project does not output", func(t *testing.T) {
+		var buf bytes.Buffer
+		out := NewHeadlessOutput(false, "")
+		out.SetWriter(&buf)
+
+		out.ProjectSummary(&budget.ProjectBudget{Project: ""})
+
+		if buf.Len() > 0 {
+			t.Error("expected no output for empty project")
+		}
+	})
+}
+
+func TestFormatTokens(t *testing.T) {
+	tests := []struct {
+		tokens   int
+		expected string
+	}{
+		{500, "500"},
+		{1000, "1.0K"},
+		{1500, "1.5K"},
+		{50000, "50.0K"},
+		{1000000, "1.0M"},
+		{1200000, "1.2M"},
+		{2500000, "2.5M"},
+	}
+
+	for _, tt := range tests {
+		result := formatTokens(tt.tokens)
+		if result != tt.expected {
+			t.Errorf("formatTokens(%d) = %s, expected %s", tt.tokens, result, tt.expected)
+		}
+	}
+}
+
+func TestHeadlessOutput_Complete_WithProject(t *testing.T) {
+	result := &RunResult{
+		EpicID:      "abc123",
+		Project:     "test-project",
+		Iterations:  10,
+		Duration:    5 * time.Second,
+		TotalCost:   1.23,
+		TotalTokens: 7000,
+		ExitReason:  "all tasks completed",
+		Signal:      SignalComplete,
+	}
+
+	t.Run("jsonl includes project field", func(t *testing.T) {
+		var buf bytes.Buffer
+		out := NewHeadlessOutput(true, "")
+		out.SetWriter(&buf)
+
+		out.Complete(result)
+
+		var data map[string]interface{}
+		if err := json.Unmarshal(buf.Bytes(), &data); err != nil {
+			t.Fatalf("invalid JSON: %v", err)
+		}
+		if data["project"] != "test-project" {
+			t.Errorf("expected project=test-project, got %v", data["project"])
+		}
+	})
+
+	t.Run("jsonl omits empty project", func(t *testing.T) {
+		var buf bytes.Buffer
+		out := NewHeadlessOutput(true, "")
+		out.SetWriter(&buf)
+
+		resultNoProject := &RunResult{
+			EpicID:      "abc123",
+			Iterations:  10,
+			Duration:    5 * time.Second,
+			TotalCost:   1.23,
+			TotalTokens: 7000,
+			ExitReason:  "all tasks completed",
+			Signal:      SignalComplete,
+		}
+		out.Complete(resultNoProject)
+
+		var data map[string]interface{}
+		if err := json.Unmarshal(buf.Bytes(), &data); err != nil {
+			t.Fatalf("invalid JSON: %v", err)
+		}
+		if _, ok := data["project"]; ok {
+			t.Error("expected no project field for empty project")
 		}
 	})
 }

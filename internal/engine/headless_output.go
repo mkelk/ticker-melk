@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/pengelbrecht/ticker/internal/budget"
 	"github.com/pengelbrecht/ticker/internal/ticks"
 	"github.com/pengelbrecht/ticker/internal/verify"
 )
@@ -193,7 +194,7 @@ func (h *HeadlessOutput) signalPrefix(sig Signal) string {
 // Complete outputs the final summary.
 func (h *HeadlessOutput) Complete(result *RunResult) {
 	if h.jsonl {
-		h.writeJSON(map[string]interface{}{
+		data := map[string]interface{}{
 			"type":         "complete",
 			"epic_id":      result.EpicID,
 			"iterations":   result.Iterations,
@@ -202,7 +203,11 @@ func (h *HeadlessOutput) Complete(result *RunResult) {
 			"total_tokens": result.TotalTokens,
 			"exit_reason":  result.ExitReason,
 			"signal":       result.Signal.String(),
-		})
+		}
+		if result.Project != "" {
+			data["project"] = result.Project
+		}
+		h.writeJSON(data)
 	} else {
 		fmt.Fprintf(h.writer, "%s[COMPLETE] Epic %s finished\n", h.prefix(), result.EpicID)
 		fmt.Fprintf(h.writer, "%s[COMPLETE] %d iterations, %v, $%.4f\n",
@@ -210,6 +215,38 @@ func (h *HeadlessOutput) Complete(result *RunResult) {
 		fmt.Fprintf(h.writer, "%s[COMPLETE] Tokens: %d\n", h.prefix(), result.TotalTokens)
 		fmt.Fprintf(h.writer, "%s[COMPLETE] Exit: %s\n", h.prefix(), result.ExitReason)
 	}
+}
+
+// ProjectSummary outputs the cumulative project budget summary.
+func (h *HeadlessOutput) ProjectSummary(pb *budget.ProjectBudget) {
+	if pb == nil || pb.Project == "" {
+		return
+	}
+	if h.jsonl {
+		h.writeJSON(map[string]interface{}{
+			"type":       "project_summary",
+			"project":    pb.Project,
+			"iterations": pb.Iterations,
+			"tokens":     pb.Tokens,
+			"cost":       pb.Cost,
+		})
+	} else {
+		fmt.Fprintf(h.writer, "%s[PROJECT] Project: %s\n", h.prefix(), pb.Project)
+		fmt.Fprintf(h.writer, "%s[PROJECT]   Iterations: %d\n", h.prefix(), pb.Iterations)
+		fmt.Fprintf(h.writer, "%s[PROJECT]   Tokens: %s\n", h.prefix(), formatTokens(pb.Tokens))
+		fmt.Fprintf(h.writer, "%s[PROJECT]   Cost: $%.2f\n", h.prefix(), pb.Cost)
+	}
+}
+
+// formatTokens formats token count with K/M suffixes.
+func formatTokens(tokens int) string {
+	if tokens >= 1_000_000 {
+		return fmt.Sprintf("%.1fM", float64(tokens)/1_000_000)
+	}
+	if tokens >= 1_000 {
+		return fmt.Sprintf("%.1fK", float64(tokens)/1_000)
+	}
+	return fmt.Sprintf("%d", tokens)
 }
 
 // Interrupted outputs when run is interrupted.

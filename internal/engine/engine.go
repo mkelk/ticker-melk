@@ -104,6 +104,9 @@ type RunResult struct {
 	// EpicID is the epic that was worked on.
 	EpicID string
 
+	// Project is the project code for the epic (if any).
+	Project string
+
 	// Iterations is the total number of iterations completed.
 	Iterations int
 
@@ -495,8 +498,13 @@ type runState struct {
 
 // toResult converts run state to a RunResult.
 func (s *runState) toResult(exitReason string, budgetUsage budget.Usage) *RunResult {
+	project := ""
+	if s.epic != nil {
+		project = s.epic.Project
+	}
 	return &RunResult{
 		EpicID:         s.epicID,
+		Project:        project,
 		Iterations:     s.iteration,
 		CompletedTasks: s.completedTasks,
 		Duration:       time.Since(s.startTime),
