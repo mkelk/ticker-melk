@@ -1,0 +1,17 @@
+{
+  "id": "cu2",
+  "title": "Update skill reference documentation",
+  "description": "Update skill documentation to reflect project support:\n\n- Update references/tk-commands.md with -project flag\n- Update SKILL.md Step 3 to include project handling\n- Add examples showing project workflow\n- Document auto-detection behavior",
+  "status": "open",
+  "priority": 2,
+  "type": "task",
+  "owner": "morten@elk.dk",
+  "blocked_by": [
+    "ih3"
+  ],
+  "parent": "tr6",
+  "acceptance_criteria": "Skill docs updated with project field documentation",
+  "created_by": "morten@elk.dk",
+  "created_at": "2026-01-14T18:52:09.2553882Z",
+  "updated_at": "2026-01-14T18:52:09.2553882Z"
+}

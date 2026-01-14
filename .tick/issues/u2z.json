@@ -1,0 +1,17 @@
+{
+  "id": "u2z",
+  "title": "Add project display to TUI",
+  "description": "Enhance TUI to show project information:\n\n- Show current project in header/status bar when --project flag used\n- Show project of selected epic in task pane\n- Add filter indicator when project filter is active\n- Optionally show project column in task list",
+  "status": "open",
+  "priority": 2,
+  "type": "task",
+  "owner": "morten@elk.dk",
+  "blocked_by": [
+    "i6d"
+  ],
+  "parent": "ki6",
+  "acceptance_criteria": "TUI displays project info correctly",
+  "created_by": "morten@elk.dk",
+  "created_at": "2026-01-14T18:51:38.9616256Z",
+  "updated_at": "2026-01-14T18:51:38.9616256Z"
+}

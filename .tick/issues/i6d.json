@@ -1,0 +1,17 @@
+{
+  "id": "i6d",
+  "title": "Add --project flag to ticker run command",
+  "description": "Add --project flag to ticker run command:\n- ticker run --project \"2026-01-14-6453-auth\"\n- ticker run --auto --project \"...\"\n- ticker run \u003cepic-id\u003e --project \"...\" (validate epic matches)\n\nBehavior:\n- Filter epics/tasks to only those matching project\n- With --auto, only consider epics with matching project\n- With explicit epic ID, warn if epic has different project",
+  "status": "open",
+  "priority": 2,
+  "type": "task",
+  "owner": "morten@elk.dk",
+  "blocked_by": [
+    "bb6"
+  ],
+  "parent": "ki6",
+  "acceptance_criteria": "ticker run --project filters correctly, tests pass",
+  "created_by": "morten@elk.dk",
+  "created_at": "2026-01-14T18:51:25.8875933Z",
+  "updated_at": "2026-01-14T18:51:25.8875933Z"
+}

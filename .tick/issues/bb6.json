@@ -1,0 +1,15 @@
+{
+  "id": "bb6",
+  "title": "Implement project field in ticks CLI",
+  "description": "Implement in pengelbrecht/ticks repo:\n- Add Project field to Tick struct\n- Add -project flag to tk create (with inheritance from parent)\n- Add --project flag to tk update\n- Add --project filter to tk list, tk ready, tk next\n- Display project in tk show output\n- Include project in JSON output\n\nSee: docs/specs/2026-01-14-6453-project-dim/ticks-cli-instruction.md",
+  "status": "open",
+  "priority": 2,
+  "type": "task",
+  "owner": "morten@elk.dk",
+  "parent": "fd7",
+  "acceptance_criteria": "All tk commands support project field, tests pass",
+  "manual": true,
+  "created_by": "morten@elk.dk",
+  "created_at": "2026-01-14T18:51:14.42851Z",
+  "updated_at": "2026-01-14T18:51:14.42851Z"
+}

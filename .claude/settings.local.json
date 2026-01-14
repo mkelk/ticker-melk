@@ -3,7 +3,13 @@
     "allow": [
       "Bash(git ls-tree:*)",
       "Bash(git cat-file:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Skill(ticker)",
+      "Bash(tk list:*)",
+      "Bash(tk create:*)",
+      "Bash(tk ready:*)",
+      "Bash(tk blocked)",
+      "Bash(tk show:*)"
     ]
   }
 }

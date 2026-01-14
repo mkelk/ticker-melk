@@ -1,0 +1,17 @@
+{
+  "id": "ih3",
+  "title": "Apply project to created ticks",
+  "description": "When creating ticks in Step 3 of skill workflow:\n\n- Apply detected project to all created epics and tasks\n- Use -project flag on tk create commands\n- Example: tk create \"Auth System\" -t epic -project \"$DETECTED_PROJECT\"\n\nIf no project detected, prompt user:\n'No project code detected. Would you like to:\n1. Generate a new project code (recommended)\n2. Continue without a project code\n3. Enter a project code manually'",
+  "status": "open",
+  "priority": 2,
+  "type": "task",
+  "owner": "morten@elk.dk",
+  "blocked_by": [
+    "tye"
+  ],
+  "parent": "tr6",
+  "acceptance_criteria": "All created ticks have project field set",
+  "created_by": "morten@elk.dk",
+  "created_at": "2026-01-14T18:52:03.4784543Z",
+  "updated_at": "2026-01-14T18:52:03.4784543Z"
+}

@@ -1,0 +1,17 @@
+{
+  "id": "tye",
+  "title": "Add project auto-detection to skill",
+  "description": "Detect project code from environment when skill is invoked:\n\nDetection order:\n1. Git branch: feature/YYYY-MM-DD-XXXX-name -\u003e extract pattern\n2. Directory name: repo-YYYY-MM-DD-XXXX-name -\u003e extract pattern  \n3. Spec directory: docs/YYYY-MM-DD-XXXX-name/ -\u003e extract from path\n\nPattern regex: (\\d{4}-\\d{2}-\\d{2}-[0-9a-f]{4}-[\\w-]+)\n\nUser notification:\n'Detected project: 2026-01-14-6453-project-dim\n(from branch: feature/2026-01-14-6453-project-dim)'",
+  "status": "open",
+  "priority": 2,
+  "type": "task",
+  "owner": "morten@elk.dk",
+  "blocked_by": [
+    "bb6"
+  ],
+  "parent": "tr6",
+  "acceptance_criteria": "Project correctly detected from branch, directory, or spec path",
+  "created_by": "morten@elk.dk",
+  "created_at": "2026-01-14T18:51:56.9718387Z",
+  "updated_at": "2026-01-14T18:51:56.9718387Z"
+}

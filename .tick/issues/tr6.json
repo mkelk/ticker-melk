@@ -1,0 +1,12 @@
+{
+  "id": "tr6",
+  "title": "Ticker Skill - Project Auto-detection",
+  "description": "Update ticker skill to auto-detect project codes from environment and apply to created ticks. Depends on ticks CLI and ticker Go having project support.",
+  "status": "open",
+  "priority": 2,
+  "type": "epic",
+  "owner": "morten@elk.dk",
+  "created_by": "morten@elk.dk",
+  "created_at": "2026-01-14T18:51:48.5971298Z",
+  "updated_at": "2026-01-14T18:51:48.5971298Z"
+}

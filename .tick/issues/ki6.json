@@ -1,0 +1,12 @@
+{
+  "id": "ki6",
+  "title": "Ticker Go - Project Support",
+  "description": "Add project filtering and budget tracking to ticker Go program. Depends on ticks CLI having project field support.",
+  "status": "open",
+  "priority": 2,
+  "type": "epic",
+  "owner": "morten@elk.dk",
+  "created_by": "morten@elk.dk",
+  "created_at": "2026-01-14T18:51:19.1067689Z",
+  "updated_at": "2026-01-14T18:51:19.1067689Z"
+}
