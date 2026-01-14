@@ -4,11 +4,11 @@
   "version": "0.3.4",
   "author": {
     "name": "Peter Engelbrecht and modified by Morten Elk",
-    "url": "https://github.com/mkelk/ticker-melk"
+    "url": "https://github.com/mkelk/ticker-melk/tree/main-melk"
   },
-  "repository": "https://github.com/mkelk/ticker-melk",
+  "repository": "https://github.com/mkelk/ticker-melk/tree/main-melk",
   "license": "MIT",
-  "homepage": "https://github.com/mkelk/ticker-melk",
+  "homepage": "https://github.com/mkelk/ticker-melk/tree/main-melk",
   "keywords": [
     "ticker",
     "ticks",

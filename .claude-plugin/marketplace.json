@@ -2,7 +2,7 @@
   "name": "ticker-melk",
   "description": "Ticker - AI agent loop runner with Ticks issue tracker",
   "owner": {
-    "name": "Peter Engelbrecht"
+    "name": "Peter Engelbrecht and modified by Morten Elk"
   },
   "plugins": [
     {
