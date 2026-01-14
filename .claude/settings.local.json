@@ -9,7 +9,9 @@
       "Bash(tk create:*)",
       "Bash(tk ready:*)",
       "Bash(tk blocked)",
-      "Bash(tk show:*)"
+      "Bash(tk show:*)",
+      "Bash(./ticker)",
+      "Bash(ticker checkpoints:*)"
     ]
   }
 }

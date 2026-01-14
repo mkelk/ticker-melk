@@ -2,11 +2,12 @@
   "id": "fd7",
   "title": "Ticks CLI - Add Project Field",
   "description": "Add first-class project field to ticks CLI. This is done in the pengelbrecht/ticks repo. See docs/specs/2026-01-14-6453-project-dim/ticks-cli-instruction.md for requirements.",
-  "status": "open",
+  "status": "closed",
   "priority": 2,
   "type": "epic",
   "owner": "morten@elk.dk",
   "created_by": "morten@elk.dk",
   "created_at": "2026-01-14T18:51:07.3119255Z",
-  "updated_at": "2026-01-14T18:51:07.3119255Z"
+  "updated_at": "2026-01-14T19:35:22.7828603Z",
+  "closed_at": "2026-01-14T19:35:22.7828603Z"
 }
