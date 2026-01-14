@@ -43,6 +43,43 @@ curl -fsSL https://raw.githubusercontent.com/pengelbrecht/ticker/main/scripts/in
 ls .tick/ 2>/dev/null || tk init
 ```
 
+**5. Detect project code:**
+
+Detect the project code from the environment. Check in this order (first match wins):
+
+1. **Git branch:** Extract from branch name pattern
+   ```bash
+   git branch --show-current 2>/dev/null
+   ```
+   Look for pattern: `(\d{4}-\d{2}-\d{2}-[0-9a-f]{4}-[\w-]+)`
+   Example: `feature/2026-01-14-6453-project-dim` → `2026-01-14-6453-project-dim`
+
+2. **Directory name:** Extract from current directory name
+   ```bash
+   basename "$(pwd)"
+   ```
+   Look for pattern: `(\d{4}-\d{2}-\d{2}-[0-9a-f]{4}-[\w-]+)`
+   Example: `repo-2026-01-14-6453-project-dim` → `2026-01-14-6453-project-dim`
+
+3. **Spec directory:** Look for spec directories matching the pattern
+   ```bash
+   ls -d docs/specs/????-??-??-????-*/ 2>/dev/null | head -1
+   ```
+   Example: `docs/specs/2026-01-14-6453-project-dim/` → `2026-01-14-6453-project-dim`
+
+**Pattern regex:** `(\d{4}-\d{2}-\d{2}-[0-9a-f]{4}-[\w-]+)`
+
+**If project detected:** Notify the user and store for use when creating ticks:
+```
+Detected project: 2026-01-14-6453-project-dim
+(from branch: feature/2026-01-14-6453-project-dim)
+```
+
+**If no project detected:** Continue without a project code. When creating ticks (Step 3), ask the user if they want to:
+1. Generate a new project code (recommended)
+2. Continue without a project code
+3. Enter a project code manually
+
 ### Step 1: Check for SPEC.md and Project Context
 
 **1a. Check for `docs/current-setup/` directory**
@@ -158,6 +195,23 @@ See `references/tick-patterns.md` for more TDD patterns.
 
 Transform the spec into ticks organized by epic.
 
+**Apply detected project to all ticks:**
+
+If a project code was detected in Step 0.5, apply it to all created ticks using the `-project` flag:
+
+```bash
+# Create epics with project
+tk create "Authentication" -t epic -project "$DETECTED_PROJECT"
+
+# Tasks under epic will inherit project from parent
+tk create "Add JWT token generation" -parent <auth-epic>
+
+# Or explicitly set project on tasks
+tk create "Add login endpoint" -project "$DETECTED_PROJECT"
+```
+
+The project code links all related ticks together for filtering and budget tracking.
+
 **CRITICAL: First Task Must Be Environment Validation**
 
 The very first task in ANY epic must be running existing tests and validating the environment. This ensures we start from a healthy state before making any code changes.
@@ -223,11 +277,11 @@ This is marked `--manual` because it may require human input. It should block an
 3. Set up dependencies between tasks using `-blocked-by`
 
 ```bash
-# Create epics
-tk create "Authentication" -t epic
-tk create "API Endpoints" -t epic
+# Create epics (with detected project if available)
+tk create "Authentication" -t epic -project "$DETECTED_PROJECT"
+tk create "API Endpoints" -t epic -project "$DETECTED_PROJECT"
 
-# Create tasks with acceptance criteria
+# Create tasks with acceptance criteria (inherit project from parent)
 tk create "Add JWT token generation" \
   -d "Implement JWT signing and verification" \
   -acceptance "JWT tests pass, tokens validate correctly" \
@@ -242,10 +296,12 @@ tk create "Add login endpoint" \
 # Manual tasks - use -manual flag (skipped by tk next)
 tk create "Set up production database" -manual \
   -d "Create RDS instance and configure access" \
-  -acceptance "Database accessible, migrations run"
+  -acceptance "Database accessible, migrations run" \
+  -project "$DETECTED_PROJECT"
 
 tk create "Create Stripe API keys" -manual \
-  -d "Set up Stripe account and get API credentials"
+  -d "Set up Stripe account and get API credentials" \
+  -project "$DETECTED_PROJECT"
 ```
 
 **Manual tasks** (use `-manual` flag):
@@ -351,13 +407,17 @@ tk create "Title" -t epic                                    # Create epic
 tk create "Title" -parent <epic-id>                          # Task under epic
 tk create "Title" -blocked-by <task-id>                      # Blocked task
 tk create "Title" -manual                                    # Manual task (skipped by automation)
+tk create "Title" -project "2026-01-14-6453-name"            # Task with project code
 
 # List and query
 tk list                                      # All open ticks
 tk list -t epic                              # Epics only
 tk list -parent <epic-id>                    # Tasks in epic
+tk list --project "2026-01-14-6453-name"     # Filter by project
 tk ready                                     # Unblocked tasks
+tk ready --project "2026-01-14-6453-name"    # Ready tasks for project
 tk next <epic-id>                            # Next task to work on
+tk next --project "2026-01-14-6453-name"     # Next task for project
 
 # Manage
 tk show <id>                                 # Show details

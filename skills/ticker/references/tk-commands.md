@@ -20,6 +20,7 @@ tk create "Title" [flags]
 | `-manual` | Mark as requiring human intervention (skipped by automation) |
 | `-defer` | Defer until date (YYYY-MM-DD) |
 | `-external-ref` | External reference (e.g., gh-42) |
+| `-project` | Project code (e.g., `2026-01-14-6453-name`). Inherits from parent if not set. |
 
 **Examples:**
 ```bash
@@ -39,6 +40,9 @@ tk create "Add OAuth" -parent abc -blocked-by def,ghi
 
 # Manual task (requires human intervention)
 tk create "Set up Stripe account" -manual -d "Create account and get API keys"
+
+# Task with project code
+tk create "Add JWT auth" -project "2026-01-14-6453-auth" -parent <epic-id>
 ```
 
 ## Listing Ticks
@@ -54,13 +58,16 @@ tk list [flags]
 | `-p, --priority` | Filter by priority (0-4) |
 | `-l, --labels` | Filter by labels |
 | `-parent` | Filter by parent epic |
+| `--project` | Filter by project code |
 | `--json` | Output as JSON |
 
 **Special commands:**
 ```bash
 tk ready                    # List ready (unblocked) tasks
+tk ready --project "..."    # Ready tasks for specific project
 tk blocked                  # List blocked tasks
 tk next <epic-id>           # Get next task in epic
+tk next --project "..."     # Next task for specific project
 ```
 
 ## Viewing Ticks
@@ -85,6 +92,7 @@ tk update <id> [flags]
 | `-d, --description` | New description |
 | `-p, --priority` | New priority |
 | `-l, --labels` | New labels (replaces existing) |
+| `--project` | Set or update project code (empty string to clear) |
 
 ## Status Changes
 
