@@ -13,7 +13,7 @@
   "acceptance_criteria": "ticker run --project filters correctly, tests pass",
   "created_by": "morten@elk.dk",
   "created_at": "2026-01-14T18:51:25.8875933Z",
-  "updated_at": "2026-01-14T19:43:34.3071212Z",
-  "closed_at": "2026-01-14T19:43:34.3071212Z",
-  "closed_reason": "Flag was already implemented in main.go line 163. Implementation includes: 1) flag registration with default empty string, 2) autoSelectEpics() filters by project when --auto used, 3) runPicker() filters epics by project for TUI picker, 4) validation warns if explicit epic ID has different project than --project flag. Tests pass for flag parsing."
+  "updated_at": "2026-01-14T19:44:35.3328865Z",
+  "closed_at": "2026-01-14T19:44:35.3328865Z",
+  "closed_reason": "Added --project flag to ticker run command. Modified cmd/ticker/main.go to add flag parsing, project filtering in autoSelectEpics, and warning when epic project doesn't match. Added ListReadyEpicsWithProject to ticks client with local filtering fallback for tk CLI compatibility. Added Project field to Epic type."
 }
