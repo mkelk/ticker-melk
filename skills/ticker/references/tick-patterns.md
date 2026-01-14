@@ -2,6 +2,26 @@
 
 Patterns for creating effective ticks that AI agents can complete autonomously.
 
+## Before Creating Ticks: Check Project Context
+
+**Always check for `docs/current-setup/` first.** This folder contains crucial grounding on:
+
+- How the project is organized
+- How the project is tested (framework, commands, patterns)
+- Build and development workflows
+- Project-specific conventions
+
+```bash
+ls docs/current-setup/ 2>/dev/null
+```
+
+If this folder exists, read all files before creating ticks. The testing documentation is especially important for writing good acceptance criteria.
+
+If this folder doesn't exist, explore the codebase to understand:
+- Test framework (Jest, Go test, pytest, etc.)
+- Test command (`npm test`, `go test ./...`, etc.)
+- Test file locations (`__tests__/`, `*_test.go`, `tests/`)
+
 ## The Ideal Tick
 
 A well-formed tick has:
@@ -34,6 +54,71 @@ Description:
 - Prevent form submission if invalid
 - Add unit tests for validation
 ```
+
+## Pattern: Environment Validation (Required First Task)
+
+**Every epic MUST start with this task.** It ensures we begin from a healthy baseline.
+
+```bash
+tk create "Run existing tests and validate environment" \
+  -d "Before any code changes, verify the project is in a healthy state:
+
+1. Run the build: [build command]
+2. Run all tests: [test command]
+3. Verify dev environment setup (dependencies, tools, etc.)
+4. Check docs/current-setup/ for documented known issues
+
+BLOCKING CONDITIONS - Do not proceed if:
+- Build fails
+- Tests fail (unless documented as known issues in docs/current-setup/)
+- Environment is misconfigured (missing deps, wrong versions, etc.)
+- Any unexpected inconsistencies discovered
+
+If problems are found, EJECT with details so they can be fixed first." \
+  -acceptance "Build passes, all tests pass (or match documented known issues), environment healthy" \
+  -parent <epic-id> \
+  -p 0
+```
+
+**Why this matters:**
+- Establishes a known-good baseline before changes
+- Surfaces environment issues early (not mid-implementation)
+- Prevents implementing on a broken codebase (which wastes effort)
+- Ensures all dependencies and tools are properly configured
+
+**If validation fails:** Signal `<promise>EJECT: [describe the problem]</promise>`. Never proceed with implementation on an unhealthy codebase. Problems must be fixed before any code changes.
+
+All other implementation tasks should use `-blocked-by <this-task-id>`.
+
+## Pattern: Testing Blocker
+
+When testing approach is unclear, create a blocking manual task to prevent premature implementation.
+
+```bash
+tk create "Document testing approach and patterns" --manual \
+  -d "Testing understanding is insufficient to proceed confidently.
+
+Need to clarify:
+- Test framework and how to run tests
+- Test file organization and naming conventions
+- How to write tests for this codebase
+- Any mocking/stubbing patterns used
+- Integration vs unit test patterns
+
+Check docs/current-setup/ if it exists.
+This blocks implementation until testing approach is clear." \
+  -acceptance "Testing approach documented, patterns understood" \
+  -parent <epic-id> \
+  -p 1
+```
+
+**When to use:**
+- No `docs/current-setup/` folder exists
+- Unfamiliar test framework
+- Unclear test patterns in existing code
+- Complex testing setup (mocking, fixtures, etc.)
+
+This is marked `--manual` because it may require human input to clarify.
 
 ## Pattern: Bug Fix
 

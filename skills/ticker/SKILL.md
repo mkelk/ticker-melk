@@ -43,7 +43,29 @@ curl -fsSL https://raw.githubusercontent.com/pengelbrecht/ticker/main/scripts/in
 ls .tick/ 2>/dev/null || tk init
 ```
 
-### Step 1: Check for SPEC.md
+### Step 1: Check for SPEC.md and Project Context
+
+**1a. Check for `docs/current-setup/` directory**
+
+Before creating specs or ticks, check if `docs/current-setup/` exists. This folder contains crucial grounding on:
+- How the project is organized
+- How the project is tested (test framework, commands, patterns)
+- Build and development workflows
+- Any project-specific conventions
+
+```bash
+ls docs/current-setup/ 2>/dev/null
+```
+
+If this folder exists, READ ALL FILES in it before proceeding. Pay special attention to testing documentation - understanding how the project is tested is critical for creating good ticks.
+
+If this folder does NOT exist, you must explore the codebase to understand:
+- Test framework (Jest, Go test, pytest, etc.)
+- Test command (`npm test`, `go test ./...`, etc.)
+- Test file locations (`__tests__/`, `*_test.go`, `tests/`)
+- Any CI configuration that runs tests
+
+**1b. Look for spec file**
 
 Look for a SPEC.md (or similar spec file) in the repo root.
 
@@ -135,6 +157,57 @@ See `references/tick-patterns.md` for more TDD patterns.
 ### Step 3: Create Ticks from Spec
 
 Transform the spec into ticks organized by epic.
+
+**CRITICAL: First Task Must Be Environment Validation**
+
+The very first task in ANY epic must be running existing tests and validating the environment. This ensures we start from a healthy state before making any code changes.
+
+```bash
+# Always create this as the first task, blocking all others
+tk create "Run existing tests and validate environment" \
+  -d "Before any code changes, verify the project is in a healthy state:
+1. Run the build: [build command from docs/current-setup/ or discovered]
+2. Run all tests: [test command from docs/current-setup/ or discovered]
+3. Verify dev environment setup (dependencies, tools, etc.)
+4. Check docs/current-setup/ for any documented known issues
+
+BLOCKING CONDITIONS - Do not proceed if:
+- Build fails
+- Tests fail (unless documented as known issues in docs/current-setup/)
+- Environment is misconfigured (missing deps, wrong versions, etc.)
+- Any unexpected inconsistencies discovered
+
+If problems are found, this task should EJECT with details so they can be fixed before implementation begins." \
+  -acceptance "Build passes, all tests pass (or match documented known issues), environment healthy" \
+  -parent <epic-id> \
+  -p 0
+```
+
+All other implementation tasks should be blocked by this validation task.
+
+**If validation fails:** The agent should signal `<promise>EJECT: [describe the problem]</promise>` so the issue can be resolved before any code changes are made. Never proceed with implementation on an unhealthy codebase.
+
+**CRITICAL: Testing Understanding Blocker**
+
+If you don't have sufficient understanding of how this project is tested (no `docs/current-setup/`, unclear test patterns, or unfamiliar test framework), you MUST create a blocking task:
+
+```bash
+tk create "Document testing approach and patterns" --manual \
+  -d "Testing understanding is insufficient to proceed confidently.
+
+Need to clarify:
+- Test framework and how to run tests
+- Test file organization and naming conventions
+- How to write tests for this codebase
+- Any mocking/stubbing patterns used
+
+This blocks implementation until testing approach is clear." \
+  -acceptance "Testing approach documented, patterns understood" \
+  -parent <epic-id> \
+  -p 1
+```
+
+This is marked `--manual` because it may require human input. It should block any tasks that involve writing code.
 
 **For phased specs:** Focus on creating ticks for the current/next phase only. Don't create ticks for future phases—they may change based on learnings from earlier phases.
 
