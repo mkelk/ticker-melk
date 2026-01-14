@@ -3,8 +3,8 @@
   "description": "AI agent loop runner with Ticks issue tracker - create specs, generate ticks, run autonomous coding agents",
   "version": "0.3.4",
   "author": {
-    "name": "Peter Engelbrecht",
-    "url": "https://github.com/pengelbrecht"
+    "name": "Peter Engelbrecht and modified by Morten Elk",
+    "url": "https://github.com/mkelk/ticker-melk"
   },
   "repository": "https://github.com/mkelk/ticker-melk",
   "license": "MIT",
