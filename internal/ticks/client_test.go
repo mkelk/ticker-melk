@@ -57,6 +57,30 @@ func TestEpicIsClosed(t *testing.T) {
 	}
 }
 
+func TestEpicProjectField(t *testing.T) {
+	// Test that Epic struct has Project field
+	epic := &Epic{
+		ID:      "test",
+		Title:   "Test Epic",
+		Project: "2026-01-14-6453-auth",
+	}
+	if epic.Project != "2026-01-14-6453-auth" {
+		t.Errorf("expected Project to be '2026-01-14-6453-auth', got %q", epic.Project)
+	}
+}
+
+func TestTaskProjectField(t *testing.T) {
+	// Test that Task struct has Project field
+	task := &Task{
+		ID:      "test",
+		Title:   "Test Task",
+		Project: "2026-01-14-6453-auth",
+	}
+	if task.Project != "2026-01-14-6453-auth" {
+		t.Errorf("expected Project to be '2026-01-14-6453-auth', got %q", task.Project)
+	}
+}
+
 func TestSetRunRecord(t *testing.T) {
 	// Create temp directory structure
 	tmpDir := t.TempDir()

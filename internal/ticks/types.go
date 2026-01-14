@@ -15,6 +15,7 @@ type Task struct {
 	Priority    int       `json:"priority"`
 	Type        string    `json:"type"`
 	Owner       string    `json:"owner"`
+	Project     string    `json:"project,omitempty"`
 	BlockedBy   []string  `json:"blocked_by,omitempty"`
 	Parent      string    `json:"parent,omitempty"`
 	Manual      bool      `json:"manual,omitempty"`
@@ -37,6 +38,7 @@ type Epic struct {
 	Priority    int       `json:"priority"`
 	Type        string    `json:"type"`
 	Owner       string    `json:"owner"`
+	Project     string    `json:"project,omitempty"`
 	Children    []string  `json:"children,omitempty"`
 	CreatedBy   string    `json:"created_by"`
 	CreatedAt   time.Time `json:"created_at"`

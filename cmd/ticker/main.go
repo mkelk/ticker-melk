@@ -160,6 +160,7 @@ func init() {
 	runCmd.Flags().Bool("verify-only", false, "Run verification without the agent (for debugging)")
 	runCmd.Flags().Bool("worktree", false, "Run epic(s) in isolated git worktree")
 	runCmd.Flags().Int("parallel", 0, "Max parallel epics (default: number of epics)")
+	runCmd.Flags().String("project", "", "Filter epics by project code")
 
 	rootCmd.AddCommand(runCmd)
 	rootCmd.AddCommand(resumeCmd)
@@ -187,6 +188,7 @@ func runRun(cmd *cobra.Command, args []string) {
 	verifyOnly, _ := cmd.Flags().GetBool("verify-only")
 	useWorktree, _ := cmd.Flags().GetBool("worktree")
 	maxParallel, _ := cmd.Flags().GetInt("parallel")
+	project, _ := cmd.Flags().GetString("project")
 
 	// Check mutual exclusivity
 	if skipVerify && verifyOnly {
@@ -224,13 +226,17 @@ func runRun(cmd *cobra.Command, args []string) {
 		if maxParallel > 0 {
 			selectCount = maxParallel
 		}
-		selected, err := autoSelectEpics(selectCount)
+		selected, err := autoSelectEpics(selectCount, project)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error auto-selecting epics: %v\n", err)
 			os.Exit(ExitError)
 		}
 		if len(selected) == 0 {
-			fmt.Fprintln(os.Stderr, "No ready epics found")
+			if project != "" {
+				fmt.Fprintf(os.Stderr, "No ready epics found for project %q\n", project)
+			} else {
+				fmt.Fprintln(os.Stderr, "No ready epics found")
+			}
 			os.Exit(ExitError)
 		}
 		epicIDs = selected
@@ -241,7 +247,7 @@ func runRun(cmd *cobra.Command, args []string) {
 		}
 	} else if !headless {
 		// Interactive mode: show epic picker
-		selected := runPicker()
+		selected := runPicker(project)
 		if selected == nil {
 			os.Exit(0) // User quit without selecting
 		}
@@ -259,7 +265,7 @@ func runRun(cmd *cobra.Command, args []string) {
 		os.Exit(ExitError)
 	}
 
-	// Get epic titles (if not already from picker)
+	// Get epic titles and validate project (if not already from picker)
 	if len(epicTitles) == 0 {
 		epicTitles = make([]string, len(epicIDs))
 		for i, id := range epicIDs {
@@ -269,6 +275,15 @@ func runRun(cmd *cobra.Command, args []string) {
 				os.Exit(ExitError)
 			}
 			epicTitles[i] = epic.Title
+
+			// Warn if epic's project doesn't match the --project filter
+			if project != "" && epic.Project != project {
+				if epic.Project == "" {
+					fmt.Fprintf(os.Stderr, "Warning: epic %s has no project (expected %q)\n", id, project)
+				} else {
+					fmt.Fprintf(os.Stderr, "Warning: epic %s has project %q (expected %q)\n", id, epic.Project, project)
+				}
+			}
 		}
 	}
 
@@ -1406,11 +1421,11 @@ func runCheckpoints(cmd *cobra.Command, args []string) {
 	}
 }
 
-// autoSelectEpics uses tk to find up to max ready epics.
+// autoSelectEpics uses tk to find up to max ready epics, optionally filtered by project.
 // Returns epic IDs sorted by priority.
-func autoSelectEpics(max int) ([]string, error) {
+func autoSelectEpics(max int, project string) ([]string, error) {
 	ticksClient := ticks.NewClient()
-	epics, err := ticksClient.ListReadyEpics()
+	epics, err := ticksClient.ListReadyEpicsWithProject(project)
 	if err != nil {
 		return nil, err
 	}
@@ -1431,19 +1446,24 @@ func autoSelectEpics(max int) ([]string, error) {
 	return ids, nil
 }
 
-// runPicker shows the interactive epic picker and returns the selected epic
-func runPicker() *tui.EpicInfo {
+// runPicker shows the interactive epic picker and returns the selected epic.
+// If project is non-empty, only epics matching that project are shown.
+func runPicker(project string) *tui.EpicInfo {
 	ticksClient := ticks.NewClient()
 
-	// Get ready epics
-	epics, err := ticksClient.ListReadyEpics()
+	// Get ready epics (optionally filtered by project)
+	epics, err := ticksClient.ListReadyEpicsWithProject(project)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error listing epics: %v\n", err)
 		os.Exit(ExitError)
 	}
 
 	if len(epics) == 0 {
-		fmt.Fprintln(os.Stderr, "No ready epics found")
+		if project != "" {
+			fmt.Fprintf(os.Stderr, "No ready epics found for project %q\n", project)
+		} else {
+			fmt.Fprintln(os.Stderr, "No ready epics found")
+		}
 		os.Exit(0)
 	}
 

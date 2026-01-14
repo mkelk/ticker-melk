@@ -192,6 +192,17 @@ func TestParallelFlagParsing(t *testing.T) {
 	}
 }
 
+// TestProjectFlagParsing tests that the --project flag is correctly defined and parsed.
+func TestProjectFlagParsing(t *testing.T) {
+	flag := runCmd.Flags().Lookup("project")
+	if flag == nil {
+		t.Fatal("--project flag not registered")
+	}
+	if flag.DefValue != "" {
+		t.Errorf("--project default value = %q, want empty string", flag.DefValue)
+	}
+}
+
 // TestWorktreeFlagParsing tests that the --worktree flag is correctly defined.
 func TestWorktreeFlagParsing(t *testing.T) {
 	flag := runCmd.Flags().Lookup("worktree")

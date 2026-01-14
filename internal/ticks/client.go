@@ -131,9 +131,30 @@ func (c *Client) NextReadyEpic() (*Epic, error) {
 
 // ListReadyEpics returns all open epics (for picker display).
 func (c *Client) ListReadyEpics() ([]Epic, error) {
-	out, err := c.run("list", "--type", "epic", "--status", "open", "--all", "--json")
+	return c.ListReadyEpicsWithProject("")
+}
+
+// ListReadyEpicsWithProject returns all open epics, optionally filtered by project.
+// If project is empty, returns all open epics.
+func (c *Client) ListReadyEpicsWithProject(project string) ([]Epic, error) {
+	args := []string{"list", "--type", "epic", "--status", "open", "--all", "--json"}
+	// Try to use tk's --project flag if available (tk v0.x.x+)
+	// Fall back to local filtering if tk doesn't support --project yet
+	if project != "" {
+		args = append(args, "--project", project)
+	}
+	out, err := c.run(args...)
 	if err != nil {
-		return nil, fmt.Errorf("tk list --type epic: %w", err)
+		// If tk doesn't support --project flag, try without it and filter locally
+		if project != "" && strings.Contains(err.Error(), "flag") {
+			args = []string{"list", "--type", "epic", "--status", "open", "--all", "--json"}
+			out, err = c.run(args...)
+			if err != nil {
+				return nil, fmt.Errorf("tk list --type epic: %w", err)
+			}
+		} else {
+			return nil, fmt.Errorf("tk list --type epic: %w", err)
+		}
 	}
 
 	out = bytes.TrimSpace(out)
@@ -146,6 +167,19 @@ func (c *Client) ListReadyEpics() ([]Epic, error) {
 	if err := json.Unmarshal(out, &wrapper); err != nil {
 		return nil, fmt.Errorf("parse epics JSON: %w", err)
 	}
+
+	// If project filter is specified, filter locally as fallback
+	// (in case tk returned all epics because it doesn't support --project)
+	if project != "" && len(wrapper.Ticks) > 0 {
+		filtered := make([]Epic, 0, len(wrapper.Ticks))
+		for _, e := range wrapper.Ticks {
+			if e.Project == project {
+				filtered = append(filtered, e)
+			}
+		}
+		return filtered, nil
+	}
+
 	return wrapper.Ticks, nil
 }
 
