@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/pengelbrecht/ticker/internal/agent"
+	"github.com/mkelk/ticker-melk/internal/agent"
 )
 
 // Client wraps the tk CLI for programmatic access to the Ticks issue tracker.

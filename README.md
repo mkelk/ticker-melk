@@ -8,8 +8,14 @@ Ticker implements the "Ralph Wiggum technique" - running AI agents in continuous
 
 ### Quick Install (Recommended)
 
+**macOS/Linux:**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/pengelbrecht/ticker/main/scripts/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/mkelk/ticker-melk/main-melk/scripts/install.sh | sh
+```
+
+**Windows (PowerShell):**
+```powershell
+irm https://raw.githubusercontent.com/mkelk/ticker-melk/main-melk/scripts/install.ps1 | iex
 ```
 
 This script will:
@@ -21,18 +27,18 @@ This script will:
 You can also specify a custom install directory:
 
 ```bash
-TICKER_INSTALL_DIR=/opt/bin curl -fsSL https://raw.githubusercontent.com/pengelbrecht/ticker/main/scripts/install.sh | sh
+TICKER_INSTALL_DIR=/opt/bin curl -fsSL https://raw.githubusercontent.com/mkelk/ticker-melk/main-melk/scripts/install.sh | sh
 ```
 
 ### Manual Installation
 
-Download the appropriate binary from the [releases page](https://github.com/pengelbrecht/ticker/releases) and add it to your PATH.
+Download the appropriate binary from the [releases page](https://github.com/mkelk/ticker-melk/releases) and add it to your PATH.
 
 ### Build from Source
 
 ```bash
-git clone https://github.com/pengelbrecht/ticker.git
-cd ticker
+git clone https://github.com/mkelk/ticker-melk.git
+cd ticker-melk
 go build -o ticker ./cmd/ticker
 ```
 

@@ -3,8 +3,8 @@ package engine_test
 import (
 	"fmt"
 
-	"github.com/pengelbrecht/ticker/internal/engine"
-	"github.com/pengelbrecht/ticker/internal/ticks"
+	"github.com/mkelk/ticker-melk/internal/engine"
+	"github.com/mkelk/ticker-melk/internal/ticks"
 )
 
 func ExamplePromptBuilder_Build() {

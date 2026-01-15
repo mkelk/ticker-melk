@@ -7,9 +7,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/pengelbrecht/ticker/internal/budget"
-	"github.com/pengelbrecht/ticker/internal/ticks"
-	"github.com/pengelbrecht/ticker/internal/verify"
+	"github.com/mkelk/ticker-melk/internal/budget"
+	"github.com/mkelk/ticker-melk/internal/ticks"
+	"github.com/mkelk/ticker-melk/internal/verify"
 )
 
 // HeadlessOutput formats output for headless mode, optimized for LLM consumption.

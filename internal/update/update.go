@@ -15,8 +15,8 @@ import (
 )
 
 const (
-	repoOwner     = "pengelbrecht"
-	repoName      = "ticker"
+	repoOwner     = "mkelk"
+	repoName      = "ticker-melk"
 	checkInterval = 24 * time.Hour
 )
 
@@ -192,7 +192,7 @@ func CheckForUpdate(currentVersion string) (*Release, bool, error) {
 func Update(currentVersion string) error {
 	method := DetectInstallMethod()
 	if method == InstallHomebrew {
-		return fmt.Errorf("ticker was installed via Homebrew. Please run: brew upgrade pengelbrecht/tap/ticker")
+		return fmt.Errorf("ticker was installed via Homebrew. Please run: brew upgrade mkelk/tap/ticker")
 	}
 
 	current := strings.TrimPrefix(currentVersion, "v")
@@ -241,12 +241,12 @@ func Update(currentVersion string) error {
 func UpdateInstructions(method InstallMethod) string {
 	switch method {
 	case InstallHomebrew:
-		return "Run: brew upgrade pengelbrecht/tap/ticker"
+		return "Run: brew upgrade mkelk/tap/ticker"
 	case InstallScript:
 		if runtime.GOOS == "windows" {
-			return "Run: ticker upgrade\nOr reinstall: irm https://raw.githubusercontent.com/pengelbrecht/ticker/main/scripts/install.ps1 | iex"
+			return "Run: ticker upgrade\nOr reinstall: irm https://raw.githubusercontent.com/mkelk/ticker-melk/main-melk/scripts/install.ps1 | iex"
 		}
-		return "Run: ticker upgrade\nOr reinstall: curl -fsSL https://raw.githubusercontent.com/pengelbrecht/ticker/main/scripts/install.sh | sh"
+		return "Run: ticker upgrade\nOr reinstall: curl -fsSL https://raw.githubusercontent.com/mkelk/ticker-melk/main-melk/scripts/install.sh | sh"
 	default:
 		return "Run: ticker upgrade"
 	}
@@ -334,7 +334,7 @@ func formatUpdateNotice(current, latest string, method InstallMethod) string {
 	var cmd string
 	switch method {
 	case InstallHomebrew:
-		cmd = "brew upgrade pengelbrecht/tap/ticker"
+		cmd = "brew upgrade mkelk/tap/ticker"
 	default:
 		cmd = "ticker upgrade"
 	}

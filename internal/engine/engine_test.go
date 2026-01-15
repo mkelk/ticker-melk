@@ -7,11 +7,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/pengelbrecht/ticker/internal/agent"
-	"github.com/pengelbrecht/ticker/internal/budget"
-	"github.com/pengelbrecht/ticker/internal/checkpoint"
-	"github.com/pengelbrecht/ticker/internal/ticks"
-	"github.com/pengelbrecht/ticker/internal/verify"
+	"github.com/mkelk/ticker-melk/internal/agent"
+	"github.com/mkelk/ticker-melk/internal/budget"
+	"github.com/mkelk/ticker-melk/internal/checkpoint"
+	"github.com/mkelk/ticker-melk/internal/ticks"
+	"github.com/mkelk/ticker-melk/internal/verify"
 )
 
 // mockAgent implements agent.Agent for testing.

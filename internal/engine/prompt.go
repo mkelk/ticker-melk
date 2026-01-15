@@ -5,7 +5,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/pengelbrecht/ticker/internal/ticks"
+	"github.com/mkelk/ticker-melk/internal/ticks"
 )
 
 // IterationContext contains all context needed to build an iteration prompt.

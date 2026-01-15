@@ -10,7 +10,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/x/ansi"
 
-	"github.com/pengelbrecht/ticker/internal/agent"
+	"github.com/mkelk/ticker-melk/internal/agent"
 )
 
 // -----------------------------------------------------------------------------

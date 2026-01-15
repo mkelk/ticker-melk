@@ -12,16 +12,16 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
 
-	"github.com/pengelbrecht/ticker/internal/agent"
-	"github.com/pengelbrecht/ticker/internal/budget"
-	"github.com/pengelbrecht/ticker/internal/checkpoint"
-	"github.com/pengelbrecht/ticker/internal/engine"
-	"github.com/pengelbrecht/ticker/internal/parallel"
-	"github.com/pengelbrecht/ticker/internal/ticks"
-	"github.com/pengelbrecht/ticker/internal/tui"
-	"github.com/pengelbrecht/ticker/internal/update"
-	"github.com/pengelbrecht/ticker/internal/verify"
-	"github.com/pengelbrecht/ticker/internal/worktree"
+	"github.com/mkelk/ticker-melk/internal/agent"
+	"github.com/mkelk/ticker-melk/internal/budget"
+	"github.com/mkelk/ticker-melk/internal/checkpoint"
+	"github.com/mkelk/ticker-melk/internal/engine"
+	"github.com/mkelk/ticker-melk/internal/parallel"
+	"github.com/mkelk/ticker-melk/internal/ticks"
+	"github.com/mkelk/ticker-melk/internal/tui"
+	"github.com/mkelk/ticker-melk/internal/update"
+	"github.com/mkelk/ticker-melk/internal/verify"
+	"github.com/mkelk/ticker-melk/internal/worktree"
 )
 
 // Version is set at build time via ldflags

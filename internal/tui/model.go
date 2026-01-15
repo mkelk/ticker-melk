@@ -19,7 +19,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
 
-	"github.com/pengelbrecht/ticker/internal/agent"
+	"github.com/mkelk/ticker-melk/internal/agent"
 )
 
 func init() {

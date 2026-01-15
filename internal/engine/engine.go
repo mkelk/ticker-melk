@@ -8,12 +8,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pengelbrecht/ticker/internal/agent"
-	"github.com/pengelbrecht/ticker/internal/budget"
-	"github.com/pengelbrecht/ticker/internal/checkpoint"
-	"github.com/pengelbrecht/ticker/internal/ticks"
-	"github.com/pengelbrecht/ticker/internal/verify"
-	"github.com/pengelbrecht/ticker/internal/worktree"
+	"github.com/mkelk/ticker-melk/internal/agent"
+	"github.com/mkelk/ticker-melk/internal/budget"
+	"github.com/mkelk/ticker-melk/internal/checkpoint"
+	"github.com/mkelk/ticker-melk/internal/ticks"
+	"github.com/mkelk/ticker-melk/internal/verify"
+	"github.com/mkelk/ticker-melk/internal/worktree"
 )
 
 // Engine orchestrates the Ralph iteration loop.

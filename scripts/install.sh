@@ -5,7 +5,7 @@
 
 set -e
 
-REPO="pengelbrecht/ticker"
+REPO="mkelk/ticker-melk"
 BINARY_NAME="ticker"
 INSTALL_DIR="${TICKER_INSTALL_DIR:-}"
 

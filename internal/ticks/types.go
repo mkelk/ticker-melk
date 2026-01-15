@@ -3,7 +3,7 @@ package ticks
 import (
 	"time"
 
-	"github.com/pengelbrecht/ticker/internal/agent"
+	"github.com/mkelk/ticker-melk/internal/agent"
 )
 
 // Task represents a single task in the Ticks issue tracker.

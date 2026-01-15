@@ -47,7 +47,7 @@ changelog:
 
 release:
   github:
-    owner: pengelbrecht
-    name: ticker
+    owner: mkelk
+    name: ticker-melk
   draft: false
   prerelease: auto

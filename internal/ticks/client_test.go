@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/pengelbrecht/ticker/internal/agent"
+	"github.com/mkelk/ticker-melk/internal/agent"
 )
 
 func TestNewClient(t *testing.T) {

@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/pengelbrecht/ticker/internal/ticks"
+	"github.com/mkelk/ticker-melk/internal/ticks"
 )
 
 func TestNewPromptBuilder(t *testing.T) {

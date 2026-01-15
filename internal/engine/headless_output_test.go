@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/pengelbrecht/ticker/internal/budget"
-	"github.com/pengelbrecht/ticker/internal/ticks"
-	"github.com/pengelbrecht/ticker/internal/verify"
+	"github.com/mkelk/ticker-melk/internal/budget"
+	"github.com/mkelk/ticker-melk/internal/ticks"
+	"github.com/mkelk/ticker-melk/internal/verify"
 )
 
 func TestHeadlessOutput_Start(t *testing.T) {

@@ -5,9 +5,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/pengelbrecht/ticker/internal/budget"
-	"github.com/pengelbrecht/ticker/internal/engine"
-	"github.com/pengelbrecht/ticker/internal/worktree"
+	"github.com/mkelk/ticker-melk/internal/budget"
+	"github.com/mkelk/ticker-melk/internal/engine"
+	"github.com/mkelk/ticker-melk/internal/worktree"
 )
 
 // RunnerConfig configures parallel execution.
