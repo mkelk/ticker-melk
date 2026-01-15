@@ -51,28 +51,28 @@ Detect the project code from the environment. Check in this order (first match w
    ```bash
    git branch --show-current 2>/dev/null
    ```
-   Look for pattern: `(\d{4}-\d{2}-\d{2}-[0-9a-f]{4}-[\w-]+)`
-   Example: `feature/2026-01-14-6453-project-dim` → `2026-01-14-6453-project-dim`
+   Look for pattern: `(\d{4}-\d{2}-\d{2}-[\w-]+)` (YYYY-MM-DD followed by project name)
+   Example: `feature/2026-01-14-project-dim` → `2026-01-14-project-dim`
 
-2. **Directory name:** Extract from current directory name
+2. **Project directory:** Check if working in a project directory under `docs/projects/`
    ```bash
-   basename "$(pwd)"
+   pwd | grep -oE 'docs/projects/[^/]+' | sed 's|docs/projects/||'
    ```
-   Look for pattern: `(\d{4}-\d{2}-\d{2}-[0-9a-f]{4}-[\w-]+)`
-   Example: `repo-2026-01-14-6453-project-dim` → `2026-01-14-6453-project-dim`
+   Example: Working in `docs/projects/2026-01-14-project-dim/` → `2026-01-14-project-dim`
 
-3. **Spec directory:** Look for spec directories matching the pattern
+   Also check for subdirectories:
    ```bash
-   ls -d docs/specs/????-??-??-????-*/ 2>/dev/null | head -1
+   # If in repo root, look for project directories
+   ls -d docs/projects/????-??-??-*/ 2>/dev/null | head -1 | xargs basename
    ```
-   Example: `docs/specs/2026-01-14-6453-project-dim/` → `2026-01-14-6453-project-dim`
+   Example: `docs/projects/2026-01-14-project-dim/` → `2026-01-14-project-dim`
 
-**Pattern regex:** `(\d{4}-\d{2}-\d{2}-[0-9a-f]{4}-[\w-]+)`
+**Pattern regex:** `(\d{4}-\d{2}-\d{2}-[\w-]+)`
 
 **If project detected:** Notify the user and store for use when creating ticks:
 ```
-Detected project: 2026-01-14-6453-project-dim
-(from branch: feature/2026-01-14-6453-project-dim)
+Detected project: 2026-01-14-project-dim
+(from branch: feature/2026-01-14-project-dim)
 ```
 
 **If no project detected:** Continue without a project code. When creating ticks (Step 3), ask the user if they want to:
@@ -94,7 +94,7 @@ Before creating specs or ticks, check if `docs/current-setup/` exists. This fold
 ls docs/current-setup/ 2>/dev/null
 ```
 
-If this folder exists, READ ALL FILES in it before proceeding. Pay special attention to testing documentation - understanding how the project is tested is critical for creating good ticks.
+If this folder exists, ensure you understand the files in it before proceeding. Pay special attention to testing documentation - understanding how the project is tested is critical for creating good ticks.
 
 If this folder does NOT exist, you must explore the codebase to understand:
 - Test framework (Jest, Go test, pytest, etc.)
@@ -104,11 +104,11 @@ If this folder does NOT exist, you must explore the codebase to understand:
 
 **1b. Look for spec file**
 
-Look for a SPEC.md (or similar spec file) in the repo root.
+Look for a SPEC.md (or similar spec file) in the repo root or in the project dir.
 
-**If no spec exists:** → Go to Step 2a (Create Spec)
-**If spec exists but incomplete:** → Go to Step 2b (Complete Spec)
-**If spec is complete:** → Skip to Step 3 (Create Ticks)
+**If no spec exists:** → Go to Step 2a (Create Spec) → then Step 2c (Challenge Spec)
+**If spec exists but incomplete:** → Go to Step 2b (Complete Spec) → then Step 2c (Challenge Spec)
+**If spec is complete:** → Go to Step 2c (Challenge Spec) → then Step 3 (Create Ticks)
 
 ### Step 2a: Create Spec Through Conversation
 
@@ -155,6 +155,78 @@ If SPEC.md exists but has gaps:
 3. **Update SPEC.md** — Fill in the missing details
 
 Use AskUserQuestion for quick decisions, conversation for complex topics.
+
+### Step 2c: Challenge the Spec
+
+Before creating ticks, validate the spec against the codebase to catch issues early. This prevents wasted effort on specs that don't fit the existing architecture.
+
+**1. Technical Consistency**
+
+Check that the spec accurately references the codebase:
+
+```bash
+# Verify referenced files exist
+# Check that APIs/interfaces described are accurate
+# Confirm naming conventions match the codebase
+```
+
+- Do referenced files, modules, or directories actually exist?
+- Are the described APIs, functions, or interfaces accurate?
+- Does the spec use correct naming conventions matching the codebase?
+
+**2. Technology Alignment**
+
+Verify the spec fits the existing tech stack:
+
+- Does the spec propose technologies already in use, or new ones?
+- If new technologies, are there conflicts with existing choices?
+- Are there existing patterns in the codebase the spec should follow?
+
+**3. Architecture Fit**
+
+Check the proposed design against existing architecture:
+
+- Does the proposed design fit the existing architecture? Check against docs/current, if it exists.
+- Are there existing utilities or components that should be reused?
+- Does it follow established patterns in the codebase?
+
+**4. Gap Analysis**
+
+Identify gaps that could cause implementation uncertainty:
+
+- Undefined edge cases or error handling
+- Missing details about data flow or state management
+- Unclear integration points with existing code
+- Ambiguous requirements that need clarification
+
+**5. Report Findings**
+
+Present issues to the user in priority order:
+
+| Priority | Action |
+|----------|--------|
+| **Critical** | Must fix before creating ticks — blocks implementation |
+| **Warning** | Should address — could cause problems during implementation |
+| **Suggestion** | Nice to have — would strengthen the spec |
+
+**If issues found:**
+1. Explain each issue clearly with specific references to code/spec
+2. Propose fixes or ask clarifying questions
+3. Update the spec with the user's input
+4. Re-validate until clean
+
+**If spec is valid:**
+```
+✓ Spec validated against codebase
+  - Technical references verified
+  - Technology alignment confirmed
+  - Architecture fit checked
+  - No blocking gaps found
+
+Ready to create ticks.
+```
+
+Proceed to Step 3 only when the spec passes validation.
 
 ## Test-Driven Development (Critical)
 
@@ -223,7 +295,7 @@ No project code detected. Would you like to:
 3. Enter a project code manually
 ```
 
-- **Option 1 (Generate new):** Create a project code using format `YYYY-MM-DD-XXXX-project-name` where XXXX is a random 4-char hex and project-name is derived from the spec/repo name. Apply to all ticks.
+- **Option 1 (Generate new):** Create a project code using format `YYYY-MM-DD-project-name` where the date is today and project-name is derived from the spec/repo name. Apply to all ticks.
 - **Option 2 (Continue without):** Create ticks without the `-project` flag. Not recommended for larger projects.
 - **Option 3 (Enter manually):** Use the user-provided project code for all ticks.
 
@@ -422,17 +494,17 @@ tk create "Title" -t epic                                    # Create epic
 tk create "Title" -parent <epic-id>                          # Task under epic
 tk create "Title" -blocked-by <task-id>                      # Blocked task
 tk create "Title" -manual                                    # Manual task (skipped by automation)
-tk create "Title" -project "2026-01-14-6453-name"            # Task with project code
+tk create "Title" -project "2026-01-14-project-name"            # Task with project code
 
 # List and query
 tk list                                      # All open ticks
 tk list -t epic                              # Epics only
 tk list -parent <epic-id>                    # Tasks in epic
-tk list --project "2026-01-14-6453-name"     # Filter by project
+tk list --project "2026-01-14-project-name"     # Filter by project
 tk ready                                     # Unblocked tasks
-tk ready --project "2026-01-14-6453-name"    # Ready tasks for project
+tk ready --project "2026-01-14-project-name"    # Ready tasks for project
 tk next <epic-id>                            # Next task to work on
-tk next --project "2026-01-14-6453-name"     # Next task for project
+tk next --project "2026-01-14-project-name"     # Next task for project
 
 # Manage
 tk show <id>                                 # Show details
