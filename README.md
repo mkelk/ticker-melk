@@ -6,7 +6,13 @@ Ticker implements the "Ralph Wiggum technique" - running AI agents in continuous
 
 ## Installation
 
-### Quick Install (Recommended)
+### Homebrew (macOS/Linux)
+
+```bash
+brew install mkelk/tap/ticker
+```
+
+### Install Script
 
 **macOS/Linux:**
 ```bash
@@ -18,14 +24,12 @@ curl -fsSL https://raw.githubusercontent.com/mkelk/ticker-melk/main-melk/scripts
 irm https://raw.githubusercontent.com/mkelk/ticker-melk/main-melk/scripts/install.ps1 | iex
 ```
 
-This script will:
-- Detect your OS (Linux, macOS, Windows) and architecture (amd64, arm64)
+The script will:
+- Detect your OS and architecture (amd64, arm64)
 - Download the latest release from GitHub
 - Install to `/usr/local/bin` (or `~/.local/bin` if not writable)
-- Skip installation if already up to date
 
-You can also specify a custom install directory:
-
+Custom install directory:
 ```bash
 TICKER_INSTALL_DIR=/opt/bin curl -fsSL https://raw.githubusercontent.com/mkelk/ticker-melk/main-melk/scripts/install.sh | sh
 ```
@@ -44,11 +48,15 @@ go build -o ticker ./cmd/ticker
 
 ### Upgrading
 
+**Homebrew:**
+```bash
+brew upgrade mkelk/tap/ticker
+```
+
+**Script/Manual installs:**
 ```bash
 ticker upgrade
 ```
-
-Or re-run the install script.
 
 ## Requirements
 
@@ -193,6 +201,10 @@ Releases are automated via GoReleaser on git tag push:
 git tag v1.0.0
 git push origin v1.0.0
 ```
+
+After a release, update the Homebrew formula in [mkelk/homebrew-tap](https://github.com/mkelk/homebrew-tap):
+1. Update version and URLs in `Formula/ticker.rb`
+2. Update SHA256 checksums from the release's `checksums.txt`
 
 ## License
 

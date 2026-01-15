@@ -173,6 +173,48 @@ go build -o ticker ./cmd/ticker
 go build -ldflags "-X main.Version=v1.0.0" -o ticker ./cmd/ticker
 ```
 
+## Installation & Release
+
+### Installation Methods
+
+| Method | Command |
+|--------|---------|
+| Homebrew (macOS/Linux) | `brew install mkelk/tap/ticker` |
+| Shell script (macOS/Linux) | `curl -fsSL https://raw.githubusercontent.com/mkelk/ticker-melk/main-melk/scripts/install.sh \| sh` |
+| PowerShell (Windows) | `irm https://raw.githubusercontent.com/mkelk/ticker-melk/main-melk/scripts/install.ps1 \| iex` |
+| Manual | Download from [releases](https://github.com/mkelk/ticker-melk/releases) |
+
+### Creating a Release
+
+1. **Tag and push** - triggers GitHub Actions:
+   ```bash
+   git tag v0.X.Y
+   git push origin v0.X.Y
+   ```
+
+2. **Update Homebrew formula** in [mkelk/homebrew-tap](https://github.com/mkelk/homebrew-tap):
+   - Update `version` in `Formula/ticker.rb`
+   - Update download URLs to new version
+   - Update SHA256 checksums from release's `checksums.txt`
+
+### Key Files
+
+| File | Purpose |
+|------|---------|
+| `.goreleaser.yaml` | GoReleaser config (builds for linux/darwin/windows, amd64/arm64) |
+| `.github/workflows/release.yml` | GitHub Actions workflow triggered by `v*` tags |
+| `scripts/install.sh` | Unix install script |
+| `scripts/install.ps1` | Windows PowerShell install script |
+| `homebrew/ticker.rb` | Reference Homebrew formula (copy to homebrew-tap) |
+| `internal/update/update.go` | Self-update logic, repo references |
+
+### Repository References
+
+All installation tooling points to:
+- **Repo**: `mkelk/ticker-melk`
+- **Branch**: `main-melk` (for raw file URLs)
+- **Homebrew tap**: `mkelk/tap` (from `mkelk/homebrew-tap`)
+
 ## Test Data
 
 ```bash
