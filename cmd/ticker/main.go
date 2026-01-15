@@ -161,6 +161,10 @@ func init() {
 	runCmd.Flags().Bool("worktree", false, "Run epic(s) in isolated git worktree")
 	runCmd.Flags().Int("parallel", 0, "Max parallel epics (default: number of epics)")
 	runCmd.Flags().String("project", "", "Filter epics by project code")
+	runCmd.Flags().String("merge-branch", "", "Branch to merge worktrees into (default: current branch)")
+
+	// Merge command flags
+	mergeCmd.Flags().String("merge-branch", "", "Branch to merge worktrees into (default: current branch)")
 
 	rootCmd.AddCommand(runCmd)
 	rootCmd.AddCommand(resumeCmd)
@@ -189,6 +193,7 @@ func runRun(cmd *cobra.Command, args []string) {
 	useWorktree, _ := cmd.Flags().GetBool("worktree")
 	maxParallel, _ := cmd.Flags().GetInt("parallel")
 	project, _ := cmd.Flags().GetString("project")
+	mergeBranch, _ := cmd.Flags().GetString("merge-branch")
 
 	// Check mutual exclusivity
 	if skipVerify && verifyOnly {
@@ -309,9 +314,9 @@ func runRun(cmd *cobra.Command, args []string) {
 			maxParallel = len(epicIDs)
 		}
 		if !headless {
-			runParallelWithTUI(epicIDs, epicTitles, epicProjects, project, maxIterations, maxCost, checkpointInterval, maxTaskRetries, skipVerify, maxParallel)
+			runParallelWithTUI(epicIDs, epicTitles, epicProjects, project, maxIterations, maxCost, checkpointInterval, maxTaskRetries, skipVerify, maxParallel, mergeBranch)
 		} else {
-			runParallelHeadless(epicIDs, maxIterations, maxCost, checkpointInterval, maxTaskRetries, skipVerify, maxParallel, jsonl)
+			runParallelHeadless(epicIDs, maxIterations, maxCost, checkpointInterval, maxTaskRetries, skipVerify, maxParallel, jsonl, mergeBranch)
 		}
 		return
 	}
@@ -356,7 +361,7 @@ func validateEpicIDs(client *ticks.Client, epicIDs []string) error {
 	return nil
 }
 
-func runParallelWithTUI(epicIDs, epicTitles, epicProjects []string, projectFilter string, maxIterations int, maxCost float64, checkpointInterval, maxTaskRetries int, skipVerify bool, maxParallel int) {
+func runParallelWithTUI(epicIDs, epicTitles, epicProjects []string, projectFilter string, maxIterations int, maxCost float64, checkpointInterval, maxTaskRetries int, skipVerify bool, maxParallel int, mergeBranch string) {
 	// Create context with signal handling
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -398,8 +403,8 @@ func runParallelWithTUI(epicIDs, epicTitles, epicProjects []string, projectFilte
 		os.Exit(ExitError)
 	}
 
-	// Initialize merge manager
-	mergeManager, err := worktree.NewMergeManager(cwd)
+	// Initialize merge manager with target branch (defaults to current branch)
+	mergeManager, err := worktree.NewMergeManagerWithBranch(cwd, mergeBranch)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error initializing merge manager: %v\n", err)
 		os.Exit(ExitError)
@@ -643,7 +648,7 @@ func runParallelWithTUI(epicIDs, epicTitles, epicProjects []string, projectFilte
 	cancel()
 }
 
-func runParallelHeadless(epicIDs []string, maxIterations int, maxCost float64, checkpointInterval, maxTaskRetries int, skipVerify bool, maxParallel int, jsonl bool) {
+func runParallelHeadless(epicIDs []string, maxIterations int, maxCost float64, checkpointInterval, maxTaskRetries int, skipVerify bool, maxParallel int, jsonl bool, mergeBranch string) {
 	// Create context with signal handling
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -695,8 +700,8 @@ func runParallelHeadless(epicIDs []string, maxIterations int, maxCost float64, c
 		os.Exit(ExitError)
 	}
 
-	// Initialize merge manager
-	mergeManager, err := worktree.NewMergeManager(cwd)
+	// Initialize merge manager with target branch (defaults to current branch)
+	mergeManager, err := worktree.NewMergeManagerWithBranch(cwd, mergeBranch)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "[ERROR] Error initializing merge manager: %v\n", err)
 		os.Exit(ExitError)
@@ -1617,6 +1622,7 @@ func runVerifyOnly() {
 // runMerge attempts to merge a previously conflicted epic's worktree branch.
 func runMerge(cmd *cobra.Command, args []string) {
 	epicID := args[0]
+	mergeBranch, _ := cmd.Flags().GetString("merge-branch")
 
 	// Get current working directory
 	dir, err := os.Getwd()
@@ -1644,8 +1650,8 @@ func runMerge(cmd *cobra.Command, args []string) {
 		os.Exit(ExitError)
 	}
 
-	// Create merge manager
-	mergeManager, err := worktree.NewMergeManager(dir)
+	// Create merge manager with target branch (defaults to current branch)
+	mergeManager, err := worktree.NewMergeManagerWithBranch(dir, mergeBranch)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(ExitError)

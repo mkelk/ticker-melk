@@ -24,29 +24,49 @@ type MergeResult struct {
 	ErrorMessage string   // Error details if failed
 }
 
-// MergeManager handles merging worktree branches to main.
+// MergeManager handles merging worktree branches to a target branch.
 type MergeManager struct {
-	repoRoot   string
-	mainBranch string // Usually "main" or "master"
+	repoRoot     string
+	targetBranch string // Branch to merge into (current branch by default)
 }
 
 // NewMergeManager creates a merge manager for the given repository.
-// Auto-detects the main branch name (main or master).
+// Uses the current branch as the merge target.
 func NewMergeManager(repoRoot string) (*MergeManager, error) {
-	mainBranch, err := detectMainBranch(repoRoot)
-	if err != nil {
-		return nil, fmt.Errorf("detecting main branch: %w", err)
+	return NewMergeManagerWithBranch(repoRoot, "")
+}
+
+// NewMergeManagerWithBranch creates a merge manager with a specific target branch.
+// If targetBranch is empty, uses the current branch.
+func NewMergeManagerWithBranch(repoRoot, targetBranch string) (*MergeManager, error) {
+	if targetBranch == "" {
+		// Default to current branch
+		branch, err := detectCurrentBranch(repoRoot)
+		if err != nil {
+			return nil, fmt.Errorf("detecting current branch: %w", err)
+		}
+		targetBranch = branch
+	} else {
+		// Verify the specified branch exists
+		if !branchExists(repoRoot, targetBranch) {
+			return nil, fmt.Errorf("branch %q does not exist", targetBranch)
+		}
 	}
 
 	return &MergeManager{
-		repoRoot:   repoRoot,
-		mainBranch: mainBranch,
+		repoRoot:     repoRoot,
+		targetBranch: targetBranch,
 	}, nil
 }
 
-// MainBranch returns the detected main branch name.
+// TargetBranch returns the branch that worktrees will be merged into.
+func (m *MergeManager) TargetBranch() string {
+	return m.targetBranch
+}
+
+// MainBranch is an alias for TargetBranch for backward compatibility.
 func (m *MergeManager) MainBranch() string {
-	return m.mainBranch
+	return m.targetBranch
 }
 
 // Merge merges the worktree branch into main.
@@ -57,7 +77,7 @@ func (m *MergeManager) Merge(wt *Worktree) (*MergeResult, error) {
 	if err := m.checkoutMain(); err != nil {
 		return &MergeResult{
 			Success:      false,
-			ErrorMessage: fmt.Sprintf("failed to checkout %s: %v", m.mainBranch, err),
+			ErrorMessage: fmt.Sprintf("failed to checkout %s: %v", m.targetBranch, err),
 		}, nil
 	}
 
@@ -130,7 +150,7 @@ func (m *MergeManager) HasConflict() bool {
 
 // checkoutMain switches to the main branch.
 func (m *MergeManager) checkoutMain() error {
-	cmd := exec.Command("git", "checkout", m.mainBranch)
+	cmd := exec.Command("git", "checkout", m.targetBranch)
 	cmd.Dir = m.repoRoot
 
 	output, err := cmd.CombinedOutput()
@@ -186,7 +206,33 @@ func (m *MergeManager) getHeadCommit() (string, error) {
 	return strings.TrimSpace(string(output)), nil
 }
 
+// detectCurrentBranch returns the name of the currently checked out branch.
+func detectCurrentBranch(repoRoot string) (string, error) {
+	cmd := exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD")
+	cmd.Dir = repoRoot
+
+	output, err := cmd.Output()
+	if err != nil {
+		return "", fmt.Errorf("failed to get current branch: %w", err)
+	}
+
+	branch := strings.TrimSpace(string(output))
+	if branch == "HEAD" {
+		return "", errors.New("detached HEAD state - please checkout a branch")
+	}
+
+	return branch, nil
+}
+
+// branchExists checks if a branch exists in the repository.
+func branchExists(repoRoot, branch string) bool {
+	cmd := exec.Command("git", "show-ref", "--verify", "--quiet", "refs/heads/"+branch)
+	cmd.Dir = repoRoot
+	return cmd.Run() == nil
+}
+
 // detectMainBranch detects whether the repository uses 'main' or 'master'.
+// Deprecated: Use detectCurrentBranch instead. Kept for reference.
 func detectMainBranch(repoRoot string) (string, error) {
 	// Check for 'main' branch first (more common in newer repos)
 	cmd := exec.Command("git", "show-ref", "--verify", "--quiet", "refs/heads/main")
