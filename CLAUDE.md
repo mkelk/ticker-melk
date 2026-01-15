@@ -19,6 +19,9 @@ go build -o ticker ./cmd/ticker
 
 # Auto-select next ready epic
 ./ticker run --auto
+
+# Run all epics in a project continuously until done
+./ticker run --project myproject --continuous
 ```
 
 ## Project Structure

@@ -162,6 +162,7 @@ func init() {
 	runCmd.Flags().Int("parallel", 0, "Max parallel epics (default: number of epics)")
 	runCmd.Flags().String("project", "", "Filter epics by project code")
 	runCmd.Flags().String("merge-branch", "", "Branch to merge worktrees into (default: current branch)")
+	runCmd.Flags().Bool("continuous", false, "Keep running until all project epics are done (requires --project)")
 
 	// Merge command flags
 	mergeCmd.Flags().String("merge-branch", "", "Branch to merge worktrees into (default: current branch)")
@@ -194,6 +195,7 @@ func runRun(cmd *cobra.Command, args []string) {
 	maxParallel, _ := cmd.Flags().GetInt("parallel")
 	project, _ := cmd.Flags().GetString("project")
 	mergeBranch, _ := cmd.Flags().GetString("merge-branch")
+	continuous, _ := cmd.Flags().GetBool("continuous")
 
 	// Check mutual exclusivity
 	if skipVerify && verifyOnly {
@@ -207,6 +209,18 @@ func runRun(cmd *cobra.Command, args []string) {
 		os.Exit(ExitError)
 	}
 
+	// --continuous requires --project
+	if continuous && project == "" {
+		fmt.Fprintln(os.Stderr, "Error: --continuous requires --project")
+		os.Exit(ExitError)
+	}
+
+	// --continuous with explicit epic IDs doesn't make sense
+	if continuous && len(args) > 0 {
+		fmt.Fprintln(os.Stderr, "Error: --continuous cannot be used with explicit epic IDs")
+		os.Exit(ExitError)
+	}
+
 	// Handle --verify-only mode (no epic required, runs in current directory)
 	if verifyOnly {
 		runVerifyOnly()
@@ -217,6 +231,12 @@ func runRun(cmd *cobra.Command, args []string) {
 	if maxParallel < 0 {
 		fmt.Fprintln(os.Stderr, "Error: --parallel must be >= 0")
 		os.Exit(ExitError)
+	}
+
+	// Handle --continuous mode (loop until no ready epics remain)
+	if continuous {
+		runContinuousProject(project, maxIterations, maxCost, checkpointInterval, maxTaskRetries, skipVerify, maxParallel, headless, jsonl, mergeBranch)
+		return
 	}
 
 	var epicIDs []string
@@ -1481,6 +1501,250 @@ func runCheckpoints(cmd *cobra.Command, args []string) {
 		fmt.Printf("%-15s %-10s %-10d $%-11.4f %s\n",
 			cp.ID, cp.EpicID, cp.Iteration, cp.TotalCost, cp.Timestamp.Format("2006-01-02 15:04"))
 	}
+}
+
+// runContinuousProject runs all epics in a project continuously until none are ready.
+// It loops: query ready epics -> run in parallel -> repeat until empty.
+func runContinuousProject(project string, maxIterations int, maxCost float64, checkpointInterval, maxTaskRetries int, skipVerify bool, maxParallel int, headless, jsonl bool, mergeBranch string) {
+	ticksClient := ticks.NewClient()
+	batch := 1
+	totalCost := 0.0
+
+	for {
+		// Query ready epics for this project
+		epics, err := ticksClient.ListReadyEpicsWithProject(project)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error querying epics: %v\n", err)
+			os.Exit(ExitError)
+		}
+
+		if len(epics) == 0 {
+			if batch == 1 {
+				fmt.Printf("No ready epics found for project %q\n", project)
+			} else {
+				fmt.Printf("\nAll epics completed for project %q\n", project)
+				fmt.Printf("Total batches: %d, Total cost: $%.4f\n", batch-1, totalCost)
+			}
+			os.Exit(ExitSuccess)
+		}
+
+		// Limit to maxParallel if specified
+		count := len(epics)
+		if maxParallel > 0 && count > maxParallel {
+			count = maxParallel
+		}
+
+		epicIDs := make([]string, count)
+		epicTitles := make([]string, count)
+		epicProjects := make([]string, count)
+		for i := 0; i < count; i++ {
+			epicIDs[i] = epics[i].ID
+			epicTitles[i] = epics[i].Title
+			epicProjects[i] = epics[i].Project
+		}
+
+		fmt.Printf("\n=== Batch %d: Running %d epic(s) for project %q ===\n", batch, len(epicIDs), project)
+		for _, id := range epicIDs {
+			fmt.Printf("  - %s\n", id)
+		}
+
+		// Run this batch
+		batchCost := runContinuousBatch(epicIDs, epicTitles, epicProjects, project, maxIterations, maxCost, checkpointInterval, maxTaskRetries, skipVerify, maxParallel, headless, jsonl, mergeBranch)
+		totalCost += batchCost
+
+		fmt.Printf("\nBatch %d complete. Cost: $%.4f\n", batch, batchCost)
+		batch++
+
+		// Brief pause before checking for more epics
+		time.Sleep(2 * time.Second)
+	}
+}
+
+// runContinuousBatch runs a single batch of epics and returns the cost.
+func runContinuousBatch(epicIDs, epicTitles, epicProjects []string, projectFilter string, maxIterations int, maxCost float64, checkpointInterval, maxTaskRetries int, skipVerify bool, maxParallel int, headless, jsonl bool, mergeBranch string) float64 {
+	// For continuous mode, we always run headless to avoid TUI complications
+	// between batches. Use the headless parallel runner.
+	if len(epicIDs) == 1 {
+		// Single epic - use runHeadless
+		result := runHeadlessWithResult(epicIDs[0], maxIterations, maxCost, checkpointInterval, maxTaskRetries, skipVerify, true, jsonl)
+		return result
+	}
+
+	// Multiple epics - use parallel headless
+	if maxParallel == 0 {
+		maxParallel = len(epicIDs)
+	}
+	return runParallelHeadlessWithResult(epicIDs, maxIterations, maxCost, checkpointInterval, maxTaskRetries, skipVerify, maxParallel, jsonl, mergeBranch)
+}
+
+// runHeadlessWithResult runs a single epic headless and returns the cost.
+func runHeadlessWithResult(epicID string, maxIterations int, maxCost float64, checkpointInterval, maxTaskRetries int, skipVerify, useWorktree, jsonl bool) float64 {
+	ticksClient := ticks.NewClient()
+	claudeAgent := agent.NewClaudeAgent()
+	budgetTracker := budget.NewTracker(budget.Limits{
+		MaxIterations: maxIterations,
+		MaxCost:       maxCost,
+	})
+	checkpointMgr := checkpoint.NewManager()
+
+	eng := engine.NewEngine(claudeAgent, ticksClient, budgetTracker, checkpointMgr)
+	if !skipVerify && isVerificationEnabled() {
+		eng.EnableVerification()
+	}
+
+	// Output callbacks
+	if jsonl {
+		eng.OnOutput = func(chunk string) {}
+	} else {
+		eng.OnOutput = func(chunk string) {
+			fmt.Print(chunk)
+		}
+		eng.OnIterationStart = func(ctx engine.IterationContext) {
+			fmt.Printf("\n--- Iteration %d: %s ---\n", ctx.Iteration, ctx.Task.Title)
+		}
+	}
+
+	ctx := context.Background()
+	result, err := eng.Run(ctx, engine.RunConfig{
+		EpicID:          epicID,
+		MaxIterations:   maxIterations,
+		MaxCost:         maxCost,
+		CheckpointEvery: checkpointInterval,
+		MaxTaskRetries:  maxTaskRetries,
+		UseWorktree:     useWorktree,
+	})
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error running epic %s: %v\n", epicID, err)
+		return budgetTracker.Usage().Cost
+	}
+
+	if result != nil {
+		return result.TotalCost
+	}
+	return budgetTracker.Usage().Cost
+}
+
+// runParallelHeadlessWithResult runs multiple epics in parallel headless and returns the total cost.
+func runParallelHeadlessWithResult(epicIDs []string, maxIterations int, maxCost float64, checkpointInterval, maxTaskRetries int, skipVerify bool, maxParallel int, jsonl bool, mergeBranch string) float64 {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-sigChan
+		cancel()
+	}()
+
+	cwd, err := os.Getwd()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error getting current directory: %v\n", err)
+		return 0
+	}
+
+	wtManager, err := worktree.NewManager(cwd)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error initializing worktree manager: %v\n", err)
+		return 0
+	}
+
+	// Check for uncommitted changes
+	isDirty, dirtyFiles, err := wtManager.IsDirty()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error checking git status: %v\n", err)
+		return 0
+	}
+	if isDirty {
+		fmt.Fprintf(os.Stderr, "Error: Cannot start parallel run - branch has uncommitted changes\n\n")
+		fmt.Fprintf(os.Stderr, "Dirty files:\n")
+		for _, f := range dirtyFiles {
+			fmt.Fprintf(os.Stderr, "  %s\n", f)
+		}
+		fmt.Fprintf(os.Stderr, "\nPlease commit, stash, or discard these changes before running.\n")
+		return 0
+	}
+
+	mergeManager, err := worktree.NewMergeManagerWithBranch(cwd, mergeBranch)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error initializing merge manager: %v\n", err)
+		return 0
+	}
+
+	sharedBudget := budget.NewTracker(budget.Limits{
+		MaxIterations: maxIterations * len(epicIDs),
+		MaxCost:       maxCost,
+	})
+
+	ticksClient := ticks.NewClient()
+	checkpointMgr := checkpoint.NewManager()
+
+	engineFactory := func(epicID string) *engine.Engine {
+		eng := engine.NewEngine(
+			agent.NewClaudeAgent(),
+			ticksClient,
+			sharedBudget,
+			checkpointMgr,
+		)
+		if !skipVerify && isVerificationEnabled() {
+			eng.EnableVerification()
+		}
+
+		if !jsonl {
+			eng.OnOutput = func(chunk string) {
+				fmt.Printf("[%s] %s", epicID, chunk)
+			}
+			eng.OnIterationStart = func(ctx engine.IterationContext) {
+				fmt.Printf("\n[%s] --- Iteration %d: %s ---\n", epicID, ctx.Iteration, ctx.Task.Title)
+			}
+		}
+		return eng
+	}
+
+	runnerConfig := parallel.RunnerConfig{
+		EpicIDs:         epicIDs,
+		MaxParallel:     maxParallel,
+		SharedBudget:    sharedBudget,
+		WorktreeManager: wtManager,
+		MergeManager:    mergeManager,
+		EngineFactory:   engineFactory,
+		EngineConfig: engine.RunConfig{
+			MaxIterations:   maxIterations,
+			MaxCost:         maxCost,
+			CheckpointEvery: checkpointInterval,
+			MaxTaskRetries:  maxTaskRetries,
+			UseWorktree:     true,
+		},
+	}
+
+	runner := parallel.NewRunner(runnerConfig)
+
+	runner.SetCallbacks(parallel.RunnerCallbacks{
+		OnEpicStart: func(epicID string) {
+			if !jsonl {
+				fmt.Printf("[%s] Started\n", epicID)
+			}
+		},
+		OnEpicComplete: func(epicID string, result *engine.RunResult) {
+			if !jsonl {
+				fmt.Printf("[%s] Completed\n", epicID)
+			}
+		},
+		OnEpicFailed: func(epicID string, err error) {
+			fmt.Fprintf(os.Stderr, "[%s] Failed: %v\n", epicID, err)
+		},
+		OnEpicConflict: func(epicID string, conflict *parallel.ConflictState) {
+			fmt.Fprintf(os.Stderr, "[%s] Merge conflict in: %v\n", epicID, conflict.Files)
+		},
+	})
+
+	result, err := runner.Run(ctx)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error running epics: %v\n", err)
+		return sharedBudget.Usage().Cost
+	}
+
+	return result.TotalCost
 }
 
 // autoSelectEpics uses tk to find up to max ready epics, optionally filtered by project.

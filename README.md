@@ -123,6 +123,24 @@ ticker run --auto --project 2026-01-14-6453
 
 Project budgets are tracked separately in `.ticker/projects.json`, allowing cost analysis per project.
 
+### Continuous Mode
+
+Use `--continuous` to keep running until all epics in a project are complete. Ticker will:
+1. Query all ready epics for the project
+2. Run them in parallel (using worktrees)
+3. After all complete, re-query for newly-ready epics
+4. Repeat until no ready epics remain
+
+```bash
+# Run all epics in a project until done
+ticker run --project 2026-01-14-6453 --continuous
+
+# Limit parallel execution
+ticker run --project 2026-01-14-6453 --continuous --parallel 2
+```
+
+This is useful for hands-off execution of an entire project's worth of work.
+
 ### TUI Controls
 
 When running in TUI mode:
